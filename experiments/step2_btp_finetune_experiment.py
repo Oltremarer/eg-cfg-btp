@@ -183,9 +183,10 @@ class BTPModelManager:
         self.source_model = AutoModelForCausalLM.from_pretrained(
             self.source_model_path,
             torch_dtype=torch.float16,
-            device_map="auto"
+            device_map="auto",
+            trust_remote_code=True
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(self.source_model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.source_model_path, trust_remote_code=True)
         
         # 设置pad token
         if self.tokenizer.pad_token is None:
@@ -197,7 +198,8 @@ class BTPModelManager:
             self.target_model = AutoModelForCausalLM.from_pretrained(
                 self.target_model_path,
                 torch_dtype=torch.float16,
-                device_map="auto"
+                device_map="auto",
+                trust_remote_code=True
             )
         else:
             self.target_model = self.source_model
