@@ -1,0 +1,32 @@
+{
+  "code": null,
+  "results": {
+    "assert upper_ctr('PYthon') == 1": {
+      "result": false,
+      "time": -1,
+      "error": "GenerationError"
+    },
+    "assert upper_ctr('BigData') == 1": {
+      "result": false,
+      "time": -1,
+      "error": "GenerationError"
+    },
+    "assert upper_ctr('program') == 0": {
+      "result": false,
+      "time": -1,
+      "error": "GenerationError"
+    }
+  },
+  "passed": false,
+  "accuracy": 0.0,
+  "general_error": "<class 'FileNotFoundError'>",
+  "has_testcase_error": true,
+  "tb": "Traceback (most recent call last):\n  File \"C:\\Users\\10905\\Desktop\\eg_cfg-master\\eg_cfg\\eg_cfg_session_manager.py\", line 572, in solve_problem_with_eg_cfg_wrapper\n    solution = self.solve_problem_with_eg_cfg(problem, gamma)\n  File \"C:\\Users\\10905\\Desktop\\eg_cfg-master\\eg_cfg\\eg_cfg_session_manager.py\", line 430, in solve_problem_with_eg_cfg\n    self.build_eg_cfg_injection_manager_and_prompt(\n  File \"C:\\Users\\10905\\Desktop\\eg_cfg-master\\eg_cfg\\eg_cfg_session_manager.py\", line 339, in build_eg_cfg_injection_manager_and_prompt\n    with open(prompts_path, \"r\") as f:\nFileNotFoundError: [Errno 2] No such file or directory: 'data\\\\deepseek_mbpp_prompts\\\\mbpp_instruct_prompts.json'\n",
+  "stats": {
+    "start_time": "2025-06-20 19:24:29",
+    "end_time": "2025-06-20 19:24:29",
+    "duration": "0:00:00"
+  },
+  "retry": 0,
+  "random_seed": 379
+}
