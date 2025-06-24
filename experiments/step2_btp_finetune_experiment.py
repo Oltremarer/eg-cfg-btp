@@ -224,7 +224,7 @@ class BTPModelManager:
                                 num_beams: int = 5, 
                                 max_new_tokens: int = 512) -> List[Dict]:
         """使用beam search生成候选解决方案"""
-        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, padding=True, max_length=1024)
         inputs = {k: v.to(self.source_model.device) for k, v in inputs.items()}
         
         with torch.no_grad():
