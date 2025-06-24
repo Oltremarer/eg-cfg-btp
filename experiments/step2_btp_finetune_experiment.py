@@ -391,17 +391,27 @@ Provide a complete Python function:
             text = f"### Instruction:\n{instruction}\n\n### Response:\n{response}{self.model_manager.tokenizer.eos_token}"
             texts.append(text)
         
-        # 分词
+        # 分词 - 修复这里的批处理问题
         def tokenize_function(examples):
-            return self.model_manager.tokenizer(
+            # 确保输入是字符串列表
+            if isinstance(examples['text'], str):
+                examples['text'] = [examples['text']]
+            
+            tokenized = self.model_manager.tokenizer(
                 examples['text'],
                 truncation=True,
                 padding=True,
-                max_length=1024
+                max_length=1024,
+                return_tensors="pt"
             )
+            
+            # 为语言模型准备labels
+            tokenized["labels"] = tokenized["input_ids"].clone()
+            
+            return tokenized
         
         dataset = Dataset.from_dict({'text': texts})
-        tokenized_dataset = dataset.map(tokenize_function, batched=True)
+        tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=['text'])
         
         return tokenized_dataset
     
