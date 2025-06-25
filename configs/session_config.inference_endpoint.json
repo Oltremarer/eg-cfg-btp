@@ -4,7 +4,7 @@
   "deployment_type": "inference_endpoint",
   "dataset": "mbpp",
   "is_prod": true,
-  "results_dir": "trials/inference_endpoint_results",
+  "results_dir": "trials/large_model_results",
   "use_global_cache": true,
   "debug_mode": true,
   "inference_endpoint_api_key": "fw_XXXXXXXXXXXXXXXXXXXXXXXX",
