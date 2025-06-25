@@ -1,0 +1,17 @@
+{
+  "experiment_config": {
+    "model_name": "deepseek-ai/deepseek-coder-1.3b-instruct",
+    "dataset": "mbpp",
+    "num_samples": 3,
+    "temperature": 0.7,
+    "max_problems": 5,
+    "use_openai": false
+  },
+  "results": {},
+  "metrics": {
+    "pass@1": 0.0,
+    "pass@5": 0.0,
+    "pass@10": 0.0
+  },
+  "timestamp": "20250622_210935"
+}

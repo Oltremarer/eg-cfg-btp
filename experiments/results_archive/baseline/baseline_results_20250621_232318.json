@@ -1,0 +1,64 @@
+{
+  "experiment_config": {
+    "model_name": "gpt-3.5-turbo",
+    "dataset": "mbpp",
+    "num_samples": 1,
+    "temperature": 0.8,
+    "max_problems": 1,
+    "use_openai": true
+  },
+  "results": {
+    "11": {
+      "problem": {
+        "task_id": 11,
+        "text": "Write a python function to remove first and last occurrence of a given character from the string.",
+        "code": "def remove_Occ(s,ch): \r\n    for i in range(len(s)): \r\n        if (s[i] == ch): \r\n            s = s[0 : i] + s[i + 1:] \r\n            break\r\n    for i in range(len(s) - 1,-1,-1):  \r\n        if (s[i] == ch): \r\n            s = s[0 : i] + s[i + 1:] \r\n            break\r\n    return s ",
+        "test_list": [
+          "assert remove_Occ(\"hello\",\"l\") == \"heo\"",
+          "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"",
+          "assert remove_Occ(\"PHP\",\"P\") == \"H\""
+        ],
+        "test_setup_code": "",
+        "challenge_test_list": [
+          "assert remove_Occ(\"hellolloll\",\"l\") == \"helollol\"",
+          "assert remove_Occ(\"\",\"l\") == \"\""
+        ]
+      },
+      "solutions": [
+        {
+          "solution_id": 0,
+          "solution": "def remove_Occ(s, c):\n    return s.replace(c, '', 1).replace(c, '', -1)",
+          "passed_tests": 3,
+          "total_tests": 3,
+          "pass_rate": 1.0,
+          "fully_passed": true,
+          "test_results": {
+            "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+              "result": true,
+              "time": 0.11049032211303711,
+              "error": null
+            },
+            "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+              "result": true,
+              "time": 0.06430196762084961,
+              "error": null
+            },
+            "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+              "result": true,
+              "time": 0.07633829116821289,
+              "error": null
+            }
+          }
+        }
+      ],
+      "best_pass_rate": 1.0,
+      "any_fully_passed": true
+    }
+  },
+  "metrics": {
+    "pass@1": 1.0,
+    "pass@5": 0.0,
+    "pass@10": 0.0
+  },
+  "timestamp": "20250621_232318"
+}

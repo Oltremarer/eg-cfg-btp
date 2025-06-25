@@ -1,0 +1,144 @@
+{
+  "experiment_config": {
+    "model_name": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "dataset": "mbpp",
+    "collect_problems": 3,
+    "prompt_type": "deepseek_official_english",
+    "improvements": [
+      "standard_english_prompts",
+      "deepseek_template",
+      "function_name_extraction"
+    ],
+    "timestamp": "2025-06-23T17:58:16.436621"
+  },
+  "detailed_results": [
+    {
+      "task_id": 11,
+      "problem_text": "Write a python function to remove first and last occurrence of a given character from the string.",
+      "expected_function_name": "remove_Occ",
+      "test_cases": [
+        "assert remove_Occ(\"hello\",\"l\") == \"heo\"",
+        "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"",
+        "assert remove_Occ(\"PHP\",\"P\") == \"H\""
+      ],
+      "prompt_template": "deepseek_official_english",
+      "generated_solutions": [
+        {
+          "solution_id": 1,
+          "code": "def remove_Occ():\n    print(remove_Occ(\"hello\",\"l\"))  # Output: \"heo\"\n    print(remove_Occ(\"abcda\",\"a\"))  # Output: \"bcd\"",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 2,
+          "code": "def remove_Occ():\n    ### Instruction:\n    Provide a python function for the given example.\n    Here is my example:\n    >>> Test Cases:\n    >>> remove_Occ(\"hello\",\"l\")\n    \"heo\"\n    >>> remove_Occ(\"abcda\",\"a\")\n    \"bcd\"\n    >>> remove_Occ(\"PHP\",\"P\")\n    \"H\"",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 3,
+          "code": "def remove_Occ():\n    You can use the `replace` method or a list comprehension to achieve the same result.",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "task_id": 12,
+      "problem_text": "Write a function to sort a given matrix in ascending order according to the sum of its rows.",
+      "expected_function_name": "sort_matrix",
+      "test_cases": [
+        "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]",
+        "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]",
+        "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]"
+      ],
+      "prompt_template": "deepseek_official_english",
+      "generated_solutions": [
+        {
+          "solution_id": 1,
+          "code": "def sort_matrix():\n    ### Explanation:\n    This function uses the built-in `sorted` function in Python, which returns a new list sorted by the specified key function. In this case, the key function is `lambda x: x[0]`, which returns the first element of the matrix (in this case, the first row). This function is applied to each row in the matrix using a lambda expression, which sorts the rows based on the first element of each row.\n    The `sorted` function takes two arguments: the input list and the key function. In this case, the key function is `lambda x: x[0]`, which returns the first element of the matrix (in this case, the first row). This function is applied to each row in the matrix using a lambda expression, which sorts the rows based on the first element of each row.\n    Note: This implementation",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 2,
+          "code": "def sort_matrix():\n    This function uses the built-in `sum` function to calculate the sum of each row in the matrix. It then uses the list comprehension `[sum(row) for row in matrix]` to sort the list of sums in ascending order.",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 3,
+          "code": "def sort_matrix(matrix):\n    # Write your code here\n    pass",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "task_id": 13,
+      "problem_text": "Write a function to count the most common words in a dictionary.",
+      "expected_function_name": "count_common",
+      "test_cases": [
+        "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]",
+        "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]",
+        "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]"
+      ],
+      "prompt_template": "deepseek_official_english",
+      "generated_solutions": [
+        {
+          "solution_id": 1,
+          "code": "def count_common():\n    print(count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 2,
+          "code": "def count_common():\n    This function takes a dictionary `d` as input and returns the most common words in the dictionary. It uses a dictionary to store the counts of each word. It then uses the `max` function to find the word with the maximum count. The function also takes a default value of 0 to avoid counting the same word twice, and returns the word with the maximum count.\n    Note: The function assumes that the input dictionary `d` is a Python dictionary. If the input dictionary is a list or a set, you should use a dictionary comprehension to create the dictionary.",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 3,
+          "code": "def count_common():\n    This function uses a dictionary to count the occurrences of each word in the input dictionary. It then uses the `get` method to access the first occurrence of each word, and the `sorted` function to sort the words by their counts. The `key` argument of the `sorted` function is used to specify the sorting key, which is the first occurrence of the word.",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_problems": 3,
+    "total_solutions": 9,
+    "successful_solutions": 0,
+    "solution_success_rate": 0.0,
+    "problems_solved": 0,
+    "problem_success_rate": 0.0
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "experiment_name": "btp_power_20250623_191939",
+  "source_model": "deepseek-ai/deepseek-coder-1.3b-instruct",
+  "target_model": null,
+  "sampling_config": {
+    "method": "power",
+    "alpha": 1.2
+  },
+  "p2value_config": {
+    "alpha": 0.3
+  },
+  "btp_config": {
+    "num_beams": 5,
+    "n_iterations": 3,
+    "batch_size": 100
+  },
+  "lora_config": {
+    "use_lora": true,
+    "r": 16,
+    "alpha": 32,
+    "dropout": 0.1,
+    "target_modules": [
+      "q_proj",
+      "v_proj",
+      "k_proj",
+      "o_proj"
+    ]
+  },
+  "training_config": {
+    "learning_rate": 0.0001,
+    "num_epochs": 1,
+    "per_device_batch_size": 2,
+    "gradient_accumulation_steps": 8,
+    "warmup_steps": 100,
+    "weight_decay": 0.01
+  },
+  "dataset": "mbpp",
+  "max_problems": 50,
+  "seed": 42,
+  "timestamp": "2025-06-23T19:19:39.238867"
+}

@@ -1,0 +1,486 @@
+{
+  "experiment_config": {
+    "model_name": "gpt-3.5-turbo",
+    "dataset": "mbpp",
+    "num_samples": 3,
+    "temperature": 0.8,
+    "max_problems": 5,
+    "use_openai": true
+  },
+  "results": {
+    "11": {
+      "problem": {
+        "task_id": 11,
+        "text": "Write a python function to remove first and last occurrence of a given character from the string.",
+        "code": "def remove_Occ(s,ch): \r\n    for i in range(len(s)): \r\n        if (s[i] == ch): \r\n            s = s[0 : i] + s[i + 1:] \r\n            break\r\n    for i in range(len(s) - 1,-1,-1):  \r\n        if (s[i] == ch): \r\n            s = s[0 : i] + s[i + 1:] \r\n            break\r\n    return s ",
+        "test_list": [
+          "assert remove_Occ(\"hello\",\"l\") == \"heo\"",
+          "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"",
+          "assert remove_Occ(\"PHP\",\"P\") == \"H\""
+        ],
+        "test_setup_code": "",
+        "challenge_test_list": [
+          "assert remove_Occ(\"hellolloll\",\"l\") == \"helollol\"",
+          "assert remove_Occ(\"\",\"l\") == \"\""
+        ]
+      },
+      "solutions": [
+        {
+          "solution_id": 0,
+          "solution": "def remove_Occ(s, char):\n    return s.replace(char, \"\", 1).rsplit(char, 1)[0]",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+              "result": false,
+              "time": 0.06352949142456055,
+              "error": null
+            },
+            "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+              "result": false,
+              "time": 0.06370306015014648,
+              "error": null
+            },
+            "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+              "result": false,
+              "time": 0.0587620735168457,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 1,
+          "solution": "def remove_Occ(s, c):\n    first_index = s.find(c)\n    last_index = s.rfind(c)\n    if first_index != -1 and last_index != -1:\n        return s[:first_index] + s[first_index+1:last_index] + s[last_index+1:]\n    else:\n        return s",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+              "result": false,
+              "time": 0.059854984283447266,
+              "error": null
+            },
+            "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+              "result": false,
+              "time": 0.05649137496948242,
+              "error": null
+            },
+            "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+              "result": false,
+              "time": 0.05910134315490723,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 2,
+          "solution": "def remove_Occ(s, char):\n    first_occurrence_index = s.index(char)\n    last_occurrence_index = s.rindex(char)\n    new_string = s[:first_occurrence_index] + s[first_occurrence_index+1:last_occurrence_index] + s[last_occurrence_index+1:]\n    return new_string",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+              "result": false,
+              "time": 0.05034136772155762,
+              "error": null
+            },
+            "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+              "result": false,
+              "time": 0.05783534049987793,
+              "error": null
+            },
+            "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+              "result": false,
+              "time": 0.05615568161010742,
+              "error": null
+            }
+          }
+        }
+      ],
+      "best_pass_rate": 0.0,
+      "any_fully_passed": false
+    },
+    "12": {
+      "problem": {
+        "task_id": 12,
+        "text": "Write a function to sort a given matrix in ascending order according to the sum of its rows.",
+        "code": "def sort_matrix(M):\r\n    result = sorted(M, key=sum)\r\n    return result",
+        "test_list": [
+          "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]",
+          "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]",
+          "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]"
+        ],
+        "test_setup_code": "",
+        "challenge_test_list": []
+      },
+      "solutions": [
+        {
+          "solution_id": 0,
+          "solution": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda x: sum(x))",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+              "result": false,
+              "time": 0.0616457462310791,
+              "error": null
+            },
+            "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+              "result": false,
+              "time": 0.05645871162414551,
+              "error": null
+            },
+            "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+              "result": false,
+              "time": 0.05500197410583496,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 1,
+          "solution": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda x: sum(x))",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+              "result": false,
+              "time": 0.06197953224182129,
+              "error": null
+            },
+            "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+              "result": false,
+              "time": 0.06324481964111328,
+              "error": null
+            },
+            "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+              "result": false,
+              "time": 0.0525364875793457,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 2,
+          "solution": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda x: sum(x))",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+              "result": false,
+              "time": 0.05781054496765137,
+              "error": null
+            },
+            "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+              "result": false,
+              "time": 0.053403377532958984,
+              "error": null
+            },
+            "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+              "result": false,
+              "time": 0.0606229305267334,
+              "error": null
+            }
+          }
+        }
+      ],
+      "best_pass_rate": 0.0,
+      "any_fully_passed": false
+    },
+    "13": {
+      "problem": {
+        "task_id": 13,
+        "text": "Write a function to count the most common words in a dictionary.",
+        "code": "from collections import Counter\r\ndef count_common(words):\r\n  word_counts = Counter(words)\r\n  top_four = word_counts.most_common(4)\r\n  return (top_four)\r\n",
+        "test_list": [
+          "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]",
+          "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]",
+          "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]"
+        ],
+        "test_setup_code": "",
+        "challenge_test_list": []
+      },
+      "solutions": [
+        {
+          "solution_id": 0,
+          "solution": "def count_common(words):\n    word_count = {}\n    for word in words:\n        if word in word_count:\n            word_count[word] += 1\n        else:\n            word_count[word] = 1\n    sorted_word_count = sorted(word_count.items(), key=lambda x: x[1], reverse=True)\n    return sorted_word_count[:4]",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+              "result": false,
+              "time": 0.07117843627929688,
+              "error": null
+            },
+            "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+              "result": false,
+              "time": 0.05591130256652832,
+              "error": null
+            },
+            "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+              "result": false,
+              "time": 0.05704164505004883,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 1,
+          "solution": "from collections import Counter\n\ndef count_common(words):\n    word_counts = Counter(words)\n    most_common = word_counts.most_common(4)\n    return most_common",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+              "result": false,
+              "time": 0.056443214416503906,
+              "error": null
+            },
+            "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+              "result": false,
+              "time": 0.057671546936035156,
+              "error": null
+            },
+            "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+              "result": false,
+              "time": 0.05638885498046875,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 2,
+          "solution": "def count_common(words):\n    word_count = {}\n    for word in words:\n        if word in word_count:\n            word_count[word] += 1\n        else:\n            word_count[word] = 1\n    \n    sorted_word_count = sorted(word_count.items(), key=lambda x: x[1], reverse=True)\n    return sorted_word_count[:4]",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+              "result": false,
+              "time": 0.05466175079345703,
+              "error": null
+            },
+            "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+              "result": false,
+              "time": 0.1041097640991211,
+              "error": null
+            },
+            "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+              "result": false,
+              "time": 0.057131290435791016,
+              "error": null
+            }
+          }
+        }
+      ],
+      "best_pass_rate": 0.0,
+      "any_fully_passed": false
+    },
+    "14": {
+      "problem": {
+        "task_id": 14,
+        "text": "Write a python function to find the volume of a triangular prism.",
+        "code": "def find_Volume(l,b,h) : \r\n    return ((l * b * h) / 2) ",
+        "test_list": [
+          "assert find_Volume(10,8,6) == 240",
+          "assert find_Volume(3,2,2) == 6",
+          "assert find_Volume(1,2,1) == 1"
+        ],
+        "test_setup_code": "",
+        "challenge_test_list": []
+      },
+      "solutions": [
+        {
+          "solution_id": 0,
+          "solution": "def find_Volume(base, height, length):\n    return (1/2) * base * height * length",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert find_Volume(10,8,6) == 240": {
+              "result": false,
+              "time": 0.06543898582458496,
+              "error": null
+            },
+            "assert find_Volume(3,2,2) == 6": {
+              "result": false,
+              "time": 0.05515313148498535,
+              "error": null
+            },
+            "assert find_Volume(1,2,1) == 1": {
+              "result": false,
+              "time": 0.0597536563873291,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 1,
+          "solution": "def find_Volume(base, height, length):\n    return 0.5 * base * height * length",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert find_Volume(10,8,6) == 240": {
+              "result": false,
+              "time": 0.05641961097717285,
+              "error": null
+            },
+            "assert find_Volume(3,2,2) == 6": {
+              "result": false,
+              "time": 0.055828094482421875,
+              "error": null
+            },
+            "assert find_Volume(1,2,1) == 1": {
+              "result": false,
+              "time": 0.05533194541931152,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 2,
+          "solution": "def find_Volume(base, height, length):\n    return (base * height * length) / 2",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert find_Volume(10,8,6) == 240": {
+              "result": false,
+              "time": 0.0578157901763916,
+              "error": null
+            },
+            "assert find_Volume(3,2,2) == 6": {
+              "result": false,
+              "time": 0.056844472885131836,
+              "error": null
+            },
+            "assert find_Volume(1,2,1) == 1": {
+              "result": false,
+              "time": 0.05625128746032715,
+              "error": null
+            }
+          }
+        }
+      ],
+      "best_pass_rate": 0.0,
+      "any_fully_passed": false
+    },
+    "15": {
+      "problem": {
+        "task_id": 15,
+        "text": "Write a function to split a string at lowercase letters.",
+        "code": "import re\r\ndef split_lowerstring(text):\r\n return (re.findall('[a-z][^a-z]*', text))",
+        "test_list": [
+          "assert split_lowerstring(\"AbCd\")==['bC','d']",
+          "assert split_lowerstring(\"Python\")==['y', 't', 'h', 'o', 'n']",
+          "assert split_lowerstring(\"Programming\")==['r', 'o', 'g', 'r', 'a', 'm', 'm', 'i', 'n', 'g']"
+        ],
+        "test_setup_code": "",
+        "challenge_test_list": []
+      },
+      "solutions": [
+        {
+          "solution_id": 0,
+          "solution": "def split_lowerstring(s):\n    res = []\n    temp = \"\"\n    for char in s:\n        if char.islower():\n            temp += char\n        else:\n            if temp:\n                res.append(temp)\n            temp = \"\"\n    if temp:\n        res.append(temp)\n    return res",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert split_lowerstring(\"AbCd\")==['bC','d']": {
+              "result": false,
+              "time": 0.0699000358581543,
+              "error": null
+            },
+            "assert split_lowerstring(\"Python\")==['y', 't', 'h', 'o', 'n']": {
+              "result": false,
+              "time": 0.06000113487243652,
+              "error": null
+            },
+            "assert split_lowerstring(\"Programming\")==['r', 'o', 'g', 'r', 'a', 'm', 'm', 'i', 'n', 'g']": {
+              "result": false,
+              "time": 0.05585479736328125,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 1,
+          "solution": "def split_lowerstring(s):\n    result = []\n    temp = ''\n    for char in s:\n        if char.islower():\n            temp += char\n        else:\n            if temp:\n                result.append(temp)\n                temp = ''\n    if temp:\n        result.append(temp)\n    return result",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert split_lowerstring(\"AbCd\")==['bC','d']": {
+              "result": false,
+              "time": 0.05875396728515625,
+              "error": null
+            },
+            "assert split_lowerstring(\"Python\")==['y', 't', 'h', 'o', 'n']": {
+              "result": false,
+              "time": 0.05972003936767578,
+              "error": null
+            },
+            "assert split_lowerstring(\"Programming\")==['r', 'o', 'g', 'r', 'a', 'm', 'm', 'i', 'n', 'g']": {
+              "result": false,
+              "time": 0.05800580978393555,
+              "error": null
+            }
+          }
+        },
+        {
+          "solution_id": 2,
+          "solution": "def split_lowerstring(s):\n    result = []\n    temp = \"\"\n    for char in s:\n        if char.islower():\n            temp += char\n        else:\n            if temp:\n                result.append(temp)\n                temp = \"\"\n    if temp:\n        result.append(temp)\n    return result",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "test_results": {
+            "assert split_lowerstring(\"AbCd\")==['bC','d']": {
+              "result": false,
+              "time": 0.06865119934082031,
+              "error": null
+            },
+            "assert split_lowerstring(\"Python\")==['y', 't', 'h', 'o', 'n']": {
+              "result": false,
+              "time": 0.0620875358581543,
+              "error": null
+            },
+            "assert split_lowerstring(\"Programming\")==['r', 'o', 'g', 'r', 'a', 'm', 'm', 'i', 'n', 'g']": {
+              "result": false,
+              "time": 0.06842660903930664,
+              "error": null
+            }
+          }
+        }
+      ],
+      "best_pass_rate": 0.0,
+      "any_fully_passed": false
+    }
+  },
+  "metrics": {
+    "pass@1": 0.0,
+    "pass@5": 0.0,
+    "pass@10": 0.0
+  },
+  "timestamp": "20250621_222600"
+}

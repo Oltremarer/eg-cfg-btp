@@ -1,0 +1,62 @@
+{
+  "experiment_config": {
+    "model_name": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "dataset": "mbpp",
+    "collect_problems": 1,
+    "improvements": [
+      "better_prompts",
+      "function_name_extraction",
+      "code_post_processing"
+    ],
+    "timestamp": "2025-06-23T17:29:22.373315"
+  },
+  "detailed_results": [
+    {
+      "task_id": 11,
+      "problem_text": "Write a python function to remove first and last occurrence of a given character from the string.",
+      "expected_function_name": "remove_Occ",
+      "test_cases": [
+        "assert remove_Occ(\"hello\",\"l\") == \"heo\"",
+        "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"",
+        "assert remove_Occ(\"PHP\",\"P\") == \"H\""
+      ],
+      "generated_solutions": [
+        {
+          "solution_id": 1,
+          "code": "string,\nchar):\n    for i in range(len(string)):\n        if string[i] == char:\n            string.pop(i)\n    return string",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 2,
+          "code": "string,\nchar,\n\")",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        },
+        {
+          "solution_id": 3,
+          "code": "string,\nchar):\n    return string.replace(char, \"\")",
+          "passed_tests": 0,
+          "total_tests": 3,
+          "pass_rate": 0.0,
+          "fully_passed": false,
+          "errors": []
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_problems": 1,
+    "total_solutions": 3,
+    "successful_solutions": 0,
+    "solution_success_rate": 0.0,
+    "problems_solved": 0,
+    "problem_success_rate": 0.0
+  }
+}

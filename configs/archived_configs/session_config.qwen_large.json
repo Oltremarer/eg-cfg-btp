@@ -1,0 +1,12 @@
+{
+  "gammas": [0.0, 0.5, 1.0, 3.0],
+  "model_name": "Qwen/Qwen3-235B-A22B",
+  "deployment_type": "inference_endpoint",
+  "dataset": "mbpp",
+  "is_prod": true,
+  "results_dir": "trials/qwen_large_results",
+  "use_global_cache": true,
+  "debug_mode": true,
+  "inference_endpoint_api_key": "fw_XXXXXXXXXXXXXXXXXXXXXXXX",
+  "inference_endpoint_url": "https://api.fireworks.ai/inference/v1/completions"
+} 

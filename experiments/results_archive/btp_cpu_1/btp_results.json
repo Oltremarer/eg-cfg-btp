@@ -1,0 +1,14 @@
+{
+  "experiment_config": {
+    "model_name": "deepseek-ai/deepseek-coder-1.3b-instruct",
+    "dataset": "mbpp",
+    "collect_problems": 2,
+    "timestamp": "2025-06-23T17:13:35.161349"
+  },
+  "analysis": {
+    "total_experiences": 10,
+    "failed_experiences": 10,
+    "avg_p2value": 0.4996693319177009,
+    "p2value_std": 5.2854750004581334e-05
+  }
+}
