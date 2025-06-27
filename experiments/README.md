@@ -1,45 +1,200 @@
-# BTP 实验套件
+# EG-CFG 实验套件
 
 基于论文《Enhancing LLMs for Code Generation with Possibility and Pass rate Prioritized Experience Replay》的完整实验实现。
 
-## 实验概述
+## 🎯 **完整实验计划与设计**
 
-本实验套件包含四个核心实验：
+### 📋 **（一）实验目标与假设**
+- **核心假设**：EG-CFG的Beam Search + Testing + Prioritized Experience Replay (BTP)框架能显著提升代码生成性能
+- **验证目标**：
+  1. EG-CFG相比baseline方法的性能提升 
+  2. BTP框架各组件的有效性和贡献度
+  3. 不同模型规模和类型上的通用性
+  4. 超参数敏感性和最优配置
 
-1. **基线实验** (`step1_baseline_experiment.py`) - 评测标准采样方法的性能
-2. **BTP实验** (`step2_btp_experiment.py`) - 验证Beam Search + Testing + Prioritized Experience Replay的有效性
-3. **消融研究** (`step3_ablation_study.py`) - 对比不同回放策略的效果
-4. **超参数分析** (`step4_hyperparameter_study.py`) - 探索关键超参数的影响
+### 🔧 **（二）基础模型与Baseline选择**
 
-## 快速开始
-
-### 运行完整实验套件
-
+#### **必选Baseline模型**（论文标准对比）：
 ```bash
-# 使用默认参数运行所有实验
-python experiments/run_all_experiments.py --model_name "deepseek-ai/deepseek-coder-1.3b-instruct"
-
-# 快速测试模式（小规模实验）
-python experiments/run_all_experiments.py --model_name "deepseek-ai/deepseek-coder-1.3b-instruct" --mode quick
-
-# 指定数据集
-python experiments/run_all_experiments.py --model_name "deepseek-ai/deepseek-coder-1.3b-instruct" --dataset humaneval
+# 传统基础模型
+- GPT-2 / GPT-Neo-2.7B          # 轻量级基准
+- CodeLlama-34B                 # 大型开源代码模型
+- StarCoder2-15B                # 最新开源代码模型
+- WizardCoder-34B               # 指令微调代码模型
 ```
 
-### 运行单个实验
-
+#### **推荐对比模型**（最新SOTA）：
 ```bash
-# 只运行基线实验
-python experiments/run_all_experiments.py --model_name "deepseek-ai/deepseek-coder-1.3b-instruct" --mode single --single_step baseline
+# DeepSeek系列
+- DeepSeek-Coder-1.3B/6.7B/33B # 我们的主要测试模型
+- DeepSeek-V3-0324              # 最新SOTA模型
 
-# 只运行BTP实验
-python experiments/run_all_experiments.py --model_name "deepseek-ai/deepseek-coder-1.3b-instruct" --mode single --single_step btp
+# 云端模型
+- GPT-4o / GPT-3.5-turbo        # OpenAI SOTA
+- MathCoder2-7B                 # 数学增强版
+
+# 轻量级模型
+- SmolLM2系列 (135M/360M/1.7B)  # 资源受限场景
 ```
 
-## 详细使用说明
+### 📊 **（三）实验数据集及评估指标**
 
-### 1. 基线实验
+#### **数据集**（建议通用广泛任务类型）：
+```bash
+✅ HumanEval    # 标准函数级任务 (164题)
+✅ MBPP         # 基础编程问题 (500题) 
+🔄 APPS         # 不同难度级别 (待集成)
+🔄 CodeContests # 高难度竞赛题 (待集成)
+```
 
+#### **评估指标**：
+```bash
+🎯 Pass@1 / Pass@k     # 最重要指标 - 代码正确性
+📊 Exact Match Accuracy # 精确匹配准确率
+⏱️ 运行效率           # 时间和资源消耗
+💡 P2Value分数        # EG-CFG特有指标
+🔄 RSR (Relative Success Rate) # 相对成功率提升
+```
+
+---
+
+## 🚀 最新更新：统一实验脚本
+
+我们已经将所有step2相关的实验整合到一个统一的脚本中：`step2_btp_finetune_experiment.py`
+
+### 🔥 统一脚本特性
+
+**支持的实验模式：**
+1. **本地模型BTP实验**（不含微调）- `--mode btp_only`
+2. **本地模型微调** - `--mode finetune`
+3. **OpenAI API实验** - `--mode openai`
+4. **DeepSeek API实验** - `--mode deepseek`
+5. **混合模式**（API采样+本地微调）- `--mode hybrid`
+
+### 📝 使用示例
+
+#### 1. 本地模型BTP实验（无微调）
+```bash
+python experiments/step2_btp_finetune_experiment.py \
+  --source-model deepseek-ai/deepseek-coder-1.3b-instruct \
+  --mode btp_only \
+  --max-problems 50 \
+  --num-beams 5
+```
+
+#### 2. 本地模型微调实验
+```bash
+python experiments/step2_btp_finetune_experiment.py \
+  --source-model deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct \
+  --target-model deepseek-ai/deepseek-coder-1.3b-instruct \
+  --mode finetune \
+  --max-problems 100 \
+  --n-iterations 3 \
+  --sampling-method power \
+  --sampling-alpha 1.5
+```
+
+#### 3. OpenAI BTP实验
+```bash
+python experiments/step2_btp_finetune_experiment.py \
+  --source-model gpt-4 \
+  --mode openai \
+  --api-key YOUR_OPENAI_API_KEY \
+  --max-problems 30 \
+  --num-beams 5
+```
+
+#### 4. DeepSeek API实验
+```bash
+python experiments/step2_btp_finetune_experiment.py \
+  --source-model deepseek-chat \
+  --mode deepseek \
+  --api-key YOUR_DEEPSEEK_API_KEY \
+  --api-base https://api.deepseek.com \
+  --max-problems 30
+```
+
+#### 5. 混合模式（API采样+本地微调）
+```bash
+python experiments/step2_btp_finetune_experiment.py \
+  --source-model gpt-4 \
+  --target-model deepseek-ai/deepseek-coder-1.3b-instruct \
+  --mode hybrid \
+  --api-key YOUR_OPENAI_API_KEY \
+  --max-problems 50 \
+  --n-iterations 2
+```
+
+### 🎛️ 主要参数说明
+
+| 参数组 | 参数 | 说明 | 默认值 |
+|--------|------|------|--------|
+| **模式** | `--mode` | 实验模式：btp_only/finetune/openai/deepseek/hybrid | finetune |
+| **模型** | `--source-model` | 源模型路径或名称 | 必需 |
+| | `--target-model` | 目标模型路径（用于微调） | None |
+| **API** | `--api-key` | API密钥 | None |
+| | `--api-base` | API基础URL | None |
+| **数据** | `--dataset` | 数据集：mbpp/humaneval | mbpp |
+| | `--max-problems` | 最大问题数量 | 50 |
+| **BTP** | `--num-beams` | Beam Search数量 | 5 |
+| | `--n-iterations` | PPER训练迭代次数 | 2 |
+| | `--batch-size` | 训练批大小 | 50 |
+| **采样** | `--sampling-method` | 采样方法：power/rank | power |
+| | `--sampling-alpha` | 采样α参数 | 1.0 |
+| | `--p2value-alpha` | P2Value权重α | 0.5 |
+| **LoRA** | `--use-lora` | 使用LoRA微调 | True |
+| | `--lora-r` | LoRA rank | 16 |
+| | `--lora-alpha` | LoRA alpha | 32 |
+
+### 🔧 模型类型自动识别
+
+统一脚本会根据模型名称和模式自动识别模型类型：
+
+- **本地模型**：`deepseek-ai/xxx`、`HuggingFaceTB/xxx`、`codellama/xxx`等
+- **OpenAI模型**：`gpt-4`、`gpt-4o`、`gpt-3.5-turbo`等，或者`--mode openai`
+- **DeepSeek API**：`deepseek-chat`等，或者`--mode deepseek`
+
+### 💡 推荐配置
+
+**快速测试（小规模）：**
+```bash
+--max-problems 10 --num-beams 3 --n-iterations 1
+```
+
+**标准实验（中等规模）：**
+```bash
+--max-problems 50 --num-beams 5 --n-iterations 2
+```
+
+**完整评估（大规模）：**
+```bash
+--max-problems 100 --num-beams 8 --n-iterations 3
+```
+
+### 🚀 主实验运行器
+
+同时，我们提供了主实验运行器 `main_experiment.py`，可以运行所有类型的实验：
+
+```bash
+# 运行完整实验套件
+python experiments/main_experiment.py \
+  --experiment all \
+  --model deepseek-1.3b \
+  --mode quick
+
+# 运行单个BTP微调实验
+python experiments/main_experiment.py \
+  --experiment btp_finetune \
+  --source-model deepseek-v2-lite \
+  --target-model deepseek-1.3b \
+  --max-problems 100
+```
+
+---
+
+## 🧪 其他实验脚本
+
+### 基线实验
 评测标准的采样-过滤方法在代码生成任务上的性能。
 
 ```bash
@@ -51,39 +206,7 @@ python experiments/step1_baseline_experiment.py \
     --output_dir experiments/results/baseline
 ```
 
-**参数说明：**
-- `--num_samples`: 每个问题生成的解决方案数量
-- `--max_problems`: 评测的问题总数
-- `--temperature`: 采样温度
-
-**输出：**
-- Pass@k 指标
-- 详细的生成结果和测试结果
-
-### 2. BTP实验
-
-实现完整的BTP管道：Beam Search采样 → 测试评估 → P2Value计算 → 优先经验回放。
-
-```bash
-python experiments/step2_btp_experiment.py \
-    --model_name "deepseek-ai/deepseek-coder-1.3b-instruct" \
-    --dataset mbpp \
-    --collect_problems 100 \
-    --output_dir experiments/results/btp
-```
-
-**核心组件：**
-- **P2ValueCalculator**: 计算综合生成概率和通过率的指标
-- **ExperienceReplayBuffer**: 存储和优先采样失败经验
-- **Beam Search**: 生成多样化候选解决方案并计算概率
-
-**输出：**
-- 经验回放缓冲区分析
-- P2Value分布统计
-- 采样策略效果对比
-
-### 3. 消融研究
-
+### 消融研究
 对比不同经验回放策略的效果，证明P2Value优先采样的优势。
 
 ```bash
@@ -94,18 +217,7 @@ python experiments/step3_ablation_study.py \
     --output_dir experiments/results/ablation
 ```
 
-**对比策略：**
-- 基线方法（无回放）
-- P2Value优先回放
-- 随机回放
-
-**输出：**
-- 各策略的性能对比
-- 统计显著性分析
-- 改进幅度量化
-
-### 4. 超参数分析
-
+### 超参数分析
 探索关键超参数对BTP性能的影响，找到最优配置。
 
 ```bash
@@ -117,54 +229,19 @@ python experiments/step4_hyperparameter_study.py \
     --output_dir experiments/results/hyperparameter
 ```
 
-**关键超参数：**
-- `alpha`: P2Value中平衡概率和通过率的权重
-- `buffer_size`: 经验回放缓冲区大小
-- `num_beams`: Beam Search宽度
-- `temperature`: 采样温度
-- `batch_size`: 回放批次大小
+### 大小模型实验
+大模型采样 → 小模型微调的完整流程。
 
-**搜索策略：**
-- `grid`: 网格搜索所有参数组合
-- `focused`: 针对关键参数的重点搜索
-
-## 实验配置
-
-### 支持的模型
-
-```python
-# 本地模型
-"deepseek-ai/deepseek-coder-1.3b-instruct"
-"deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct"
-
-# 推理端点（需要配置）
-"inference_endpoint_model_name"
-```
-
-### 支持的数据集
-
-- **MBPP**: Mostly Basic Python Problems
-- **HumanEval**: 人工评估的Python编程问题
-- **APPS**: 竞赛级编程问题（实验性支持）
-
-### 实验参数调优建议
-
-**快速测试：**
 ```bash
---num_samples 3 --max_problems 10 --collect_problems 10
+python experiments/big_to_small_finetune_experiment.py \
+    --source-model deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct \
+    --target-model deepseek-ai/deepseek-coder-1.3b-instruct \
+    --max-problems 100
 ```
 
-**标准实验：**
-```bash
---num_samples 10 --max_problems 50 --collect_problems 50
-```
+---
 
-**完整评估：**
-```bash
---num_samples 20 --max_problems 100 --collect_problems 100
-```
-
-## 结果分析
+## 📊 结果分析
 
 ### 输出文件结构
 
@@ -188,74 +265,51 @@ experiments/results/experiment_YYYYMMDD_HHMMSS/
 3. **P2Value**: 综合生成概率和通过率的优先级指标
 4. **Success Rate**: 完全解决问题的比例
 
-### 结果解读
+---
 
-- **基线 vs BTP**: BTP应该在Pass@k和Success Rate上显著优于基线
-- **BTP vs 随机回放**: P2Value优先采样应该优于随机采样
-- **超参数影响**: alpha参数通常在0.5左右效果最好
+## 🔧 环境要求
 
-## 故障排除
-
-### 常见问题
-
-1. **内存不足**
-   ```bash
-   # 减少问题数量和批次大小
-   --max_problems 20 --collect_problems 20 --batch_size 10
-   ```
-
-2. **模型加载失败**
-   ```bash
-   # 检查模型名称和访问权限
-   # 确保有足够的GPU内存
-   ```
-
-3. **数据集加载错误**
-   ```bash
-   # 确保网络连接正常
-   # 检查数据集名称拼写
-   ```
-
-### 调试模式
-
+### 必需依赖
 ```bash
-# 启用详细输出
-export PYTHONPATH="${PYTHONPATH}:."
-python -u experiments/step1_baseline_experiment.py --model_name "your_model" --dataset mbpp --max_problems 5
+pip install torch transformers datasets tqdm numpy
 ```
 
-## 扩展实验
+### 可选依赖（根据使用模式）
+```bash
+# OpenAI API支持
+pip install openai
 
-### 添加新数据集
+# DeepSeek/其他API支持
+pip install requests
 
-1. 在相应的utils文件中添加数据加载函数
-2. 修改实验脚本中的数据集选择逻辑
-3. 适配测试用例格式
+# LoRA微调支持
+pip install peft
 
-### 添加新评估指标
-
-1. 在实验脚本中添加指标计算函数
-2. 修改结果分析和报告生成逻辑
-3. 更新输出格式
-
-### 自定义P2Value计算
-
-```python
-class CustomP2ValueCalculator(P2ValueCalculator):
-    def calculate_p2value(self, log_prob, sequence_length, passed_tests, total_tests):
-        # 自定义计算逻辑
-        pass
+# 高级功能
+pip install accelerate bitsandbytes
 ```
 
-## 引用
+---
 
-如果使用本实验代码，请引用原论文：
+## 🎯 最佳实践
 
-```bibtex
-@article{your_paper_2026,
-  title={Enhancing LLMs for Code Generation with Possibility and Pass rate Prioritized Experience Replay},
-  author={Your Authors},
-  journal={AAAI},
-  year={2026}
-}
+1. **开始小规模测试**：使用`--max-problems 10`验证配置
+2. **选择合适的采样策略**：Power Sampling通常效果更好
+3. **调整P2Value权重**：`--p2value-alpha 0.3`更重视通过率
+4. **使用LoRA微调**：减少显存占用，提高训练效率
+5. **监控实验进度**：开启`--debug`查看详细日志
+
+---
+
+## 🆘 故障排除
+
+**常见问题：**
+- **内存不足**：减少`--batch-size`和`--per-device-batch-size`
+- **API调用失败**：检查`--api-key`和网络连接
+- **模型加载失败**：确认模型路径和权限
+- **CUDA错误**：检查GPU驱动和CUDA版本兼容性
+
+**获取帮助：**
+```bash
+python experiments/step2_btp_finetune_experiment.py --help
 ``` 

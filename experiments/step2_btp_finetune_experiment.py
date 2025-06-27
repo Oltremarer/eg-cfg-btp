@@ -1,7 +1,27 @@
 #!/usr/bin/env python3
 """
-BTP (Beam Search + Testing + Prioritized Experience Replay) 微调实验
-支持论文中的完整BTP算法，包括真正的模型微调
+统一的BTP实验脚本 - 支持本地模型微调和API模型
+BTP = Beam Search + Testing + Prioritized Experience Replay
+
+支持的功能：
+1. 本地模型的BTP实验（不含微调）
+2. 本地模型的BTP微调实验
+3. OpenAI API的BTP实验
+4. DeepSeek API的BTP实验
+5. 混合模式（API采样+本地微调）
+
+使用示例：
+1. 本地模型BTP实验（无微调）：
+   python experiments/step2_btp_finetune_experiment.py --source-model deepseek-ai/deepseek-coder-1.3b-instruct --mode btp_only
+
+2. 本地模型微调：
+   python experiments/step2_btp_finetune_experiment.py --source-model deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct --target-model deepseek-ai/deepseek-coder-1.3b-instruct --mode finetune
+
+3. OpenAI BTP实验：
+   python experiments/step2_btp_finetune_experiment.py --source-model gpt-4 --mode openai --api-key YOUR_KEY
+
+4. 混合模式（API采样+本地微调）：
+   python experiments/step2_btp_finetune_experiment.py --source-model gpt-4 --target-model deepseek-ai/deepseek-coder-1.3b-instruct --mode hybrid --api-key YOUR_KEY
 """
 
 import os
@@ -22,6 +42,7 @@ from typing import List, Dict, Any, Optional
 # 添加项目根目录到路径
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+# 条件导入
 try:
     # Transformers相关导入
     from transformers import (
@@ -34,13 +55,221 @@ try:
     )
     from peft import LoraConfig, get_peft_model, TaskType
     from datasets import Dataset
+    HF_AVAILABLE = True
 except ImportError as e:
-    print(f"Missing dependencies: {e}")
-    print("Please install: pip install transformers peft datasets")
-    sys.exit(1)
+    print(f"⚠️  缺少HuggingFace依赖: {e}")
+    print("本地模型功能将不可用。如需使用本地模型，请安装: pip install transformers peft datasets")
+    HF_AVAILABLE = False
+
+try:
+    from eg_cfg.openai_utils import OpenAIClient, OpenAIInferenceError
+    OPENAI_AVAILABLE = True
+except ImportError:
+    print("⚠️  OpenAI工具不可用，OpenAI功能将被禁用")
+    OPENAI_AVAILABLE = False
+
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
 
 # 项目相关导入
 from eg_cfg.mbpp_utils import load_mbpp_problems, run_tests
+if HF_AVAILABLE:
+    from eg_cfg.model_utils import setup_device, load_model, load_tokenizer
+
+
+class ModelAdapter:
+    """统一模型适配器 - 支持本地和API模型"""
+    
+    def __init__(self, model_name: str, model_type: str = "local", 
+                 api_key: str = None, api_base: str = None, **kwargs):
+        self.model_name = model_name
+        self.model_type = model_type
+        self.api_key = api_key
+        self.api_base = api_base
+        self.kwargs = kwargs
+        
+        self.model = None
+        self.tokenizer = None
+        self.device = None
+        self._setup_model()
+    
+    def _setup_model(self):
+        """设置模型"""
+        if self.model_type == "local":
+            self._setup_local_model()
+        elif self.model_type == "openai":
+            self._setup_openai_model()
+        elif self.model_type in ["deepseek", "api"]:
+            self._setup_api_model()
+        else:
+            raise ValueError(f"不支持的模型类型: {self.model_type}")
+    
+    def _setup_local_model(self):
+        """设置本地模型"""
+        if not HF_AVAILABLE:
+            raise ImportError("本地模型需要安装transformers库")
+        
+        print(f"🔧 加载本地模型: {self.model_name}")
+        
+        self.device = setup_device()
+        self.model, self.tokenizer = load_model(self.model_name, self.device)
+        
+        # 设置pad_token
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+    
+    def _setup_openai_model(self):
+        """设置OpenAI模型"""
+        if not OPENAI_AVAILABLE:
+            raise ImportError("OpenAI模型需要安装openai相关依赖")
+        
+        print(f"🔧 配置OpenAI模型: {self.model_name}")
+        self.client = OpenAIClient(api_key=self.api_key, model=self.model_name)
+    
+    def _setup_api_model(self):
+        """设置API模型"""
+        if not REQUESTS_AVAILABLE:
+            raise ImportError("API模型需要安装requests库")
+        
+        print(f"🔧 配置API模型: {self.model_name}")
+        self.api_headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+    
+    def generate(self, prompt: str, **generation_kwargs) -> List[Dict]:
+        """统一生成接口"""
+        if self.model_type == "local":
+            return self._generate_local(prompt, **generation_kwargs)
+        elif self.model_type == "openai":
+            return self._generate_openai(prompt, **generation_kwargs)
+        elif self.model_type in ["deepseek", "api"]:
+            return self._generate_api(prompt, **generation_kwargs)
+        else:
+            raise ValueError(f"不支持的模型类型: {self.model_type}")
+    
+    def _generate_local(self, prompt: str, num_beams: int = 5, 
+                       temperature: float = 0.8, max_tokens: int = 512,
+                       **kwargs) -> List[Dict]:
+        """本地模型生成"""
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        
+        with torch.no_grad():
+            outputs = self.model.generate(
+                **inputs,
+                num_beams=num_beams,
+                num_return_sequences=num_beams,
+                max_new_tokens=max_tokens,
+                do_sample=temperature > 0,
+                temperature=temperature if temperature > 0 else 1.0,
+                return_dict_in_generate=True,
+                output_scores=True,
+                pad_token_id=self.tokenizer.pad_token_id,
+                eos_token_id=self.tokenizer.eos_token_id,
+                **kwargs
+            )
+        
+        results = []
+        sequences = outputs.sequences
+        scores = outputs.sequences_scores if hasattr(outputs, 'sequences_scores') else None
+        
+        for i, sequence in enumerate(sequences):
+            generated_text = self.tokenizer.decode(sequence, skip_special_tokens=True)
+            code = generated_text[len(prompt):].strip()
+            
+            if scores is not None:
+                log_prob = scores[i].item()
+                possibility = min(math.exp(log_prob / len(sequence)), 1.0)
+            else:
+                log_prob = -10.0
+                possibility = 0.5
+            
+            results.append({
+                'code': code,
+                'possibility': possibility,
+                'log_prob': log_prob,
+                'beam_rank': i,
+                'sequence_length': len(sequence) - inputs['input_ids'].shape[1]
+            })
+        
+        return results
+    
+    def _generate_openai(self, prompt: str, num_beams: int = 5, 
+                        temperature: float = 0.8, **kwargs) -> List[Dict]:
+        """OpenAI模型生成"""
+        results = []
+        
+        try:
+            solutions = self.client.generate_code(
+                prompt=prompt,
+                max_tokens=512,
+                temperature=temperature,
+                n=num_beams
+            )
+            
+            for i, code in enumerate(solutions):
+                # 为OpenAI生成的代码计算可能性分数
+                possibility = max(0.1, 1.0 - (temperature * 0.5) - (i * 0.1))
+                
+                results.append({
+                    'code': code,
+                    'possibility': possibility,
+                    'beam_rank': i,
+                    'temperature': temperature
+                })
+                
+        except Exception as e:
+            print(f"⚠️  OpenAI生成失败: {e}")
+            for i in range(num_beams):
+                results.append({
+                    'code': f"# API调用失败: {e}",
+                    'possibility': 0.0,
+                    'beam_rank': i
+                })
+        
+        return results
+    
+    def _generate_api(self, prompt: str, num_beams: int = 5, 
+                     temperature: float = 0.8, **kwargs) -> List[Dict]:
+        """通用API模型生成"""
+        results = []
+        api_url = self.api_base or "https://api.deepseek.com/v1/chat/completions"
+        
+        for i in range(num_beams):
+            try:
+                payload = {
+                    "model": self.model_name,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": temperature,
+                    "max_tokens": 512
+                }
+                
+                response = requests.post(api_url, headers=self.api_headers, json=payload)
+                response.raise_for_status()
+                
+                data = response.json()
+                code = data['choices'][0]['message']['content'].strip()
+                possibility = random.uniform(0.3, 0.9)  # 模拟概率
+                
+                results.append({
+                    'code': code,
+                    'possibility': possibility,
+                    'beam_rank': i
+                })
+                
+            except Exception as e:
+                print(f"⚠️  API调用失败: {e}")
+                results.append({
+                    'code': f"# API调用失败: {e}",
+                    'possibility': 0.0,
+                    'beam_rank': i
+                })
+        
+        return results
 
 
 class P2ValueCalculator:
@@ -52,6 +281,20 @@ class P2ValueCalculator:
     def calculate_p2value(self, possibility: float, pass_rate: float) -> float:
         """计算P2Value = α × possibility + (1-α) × pass_rate"""
         return self.alpha * possibility + (1 - self.alpha) * pass_rate
+    
+    def calculate_p2value_extended(self, log_prob=None, sequence_length=None, 
+                                 possibility=None, passed_tests=0, total_tests=1):
+        """扩展的P2Value计算，兼容不同输入格式"""
+        if possibility is None:
+            if log_prob is not None and sequence_length is not None:
+                possibility = min(math.exp(log_prob / max(sequence_length, 1)), 1.0)
+            else:
+                possibility = 0.5  # 默认值
+        
+        pass_rate = passed_tests / max(total_tests, 1)
+        p2value = self.alpha * possibility + (1 - self.alpha) * pass_rate
+        
+        return p2value, possibility, pass_rate
 
 
 class PrioritizedSampler:
@@ -517,68 +760,121 @@ Provide a complete Python function:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='BTP Fine-tuning Experiment')
+    parser = argparse.ArgumentParser(
+        description='统一的BTP实验脚本 - 支持本地模型微调和API模型',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+使用示例:
+
+1. 本地模型BTP实验（无微调）:
+   python experiments/step2_btp_finetune_experiment.py \\
+     --source-model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode btp_only --max-problems 50
+
+2. 本地模型微调:
+   python experiments/step2_btp_finetune_experiment.py \\
+     --source-model deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct \\
+     --target-model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100
+
+3. OpenAI BTP实验:
+   python experiments/step2_btp_finetune_experiment.py \\
+     --source-model gpt-4 --mode openai \\
+     --api-key YOUR_OPENAI_KEY --max-problems 30
+
+4. 混合模式（API采样+本地微调）:
+   python experiments/step2_btp_finetune_experiment.py \\
+     --source-model gpt-4 --mode hybrid \\
+     --target-model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --api-key YOUR_OPENAI_KEY --max-problems 50
+
+5. DeepSeek API实验:
+   python experiments/step2_btp_finetune_experiment.py \\
+     --source-model deepseek-chat --mode deepseek \\
+     --api-key YOUR_DEEPSEEK_KEY \\
+     --api-base https://api.deepseek.com --max-problems 30
+        """)
+    
+    # 实验模式
+    parser.add_argument('--mode', type=str, default='finetune',
+                       choices=['btp_only', 'finetune', 'openai', 'deepseek', 'hybrid'],
+                       help='实验模式')
     
     # 模型相关参数
-    parser.add_argument('--source-model', type=str, required=True,
-                       help='Source model path for initial generation')
-    parser.add_argument('--target-model', type=str, default=None,
-                       help='Target model path for fine-tuning (default: same as source)')
+    model_group = parser.add_argument_group('模型参数')
+    model_group.add_argument('--source-model', type=str, required=True,
+                           help='源模型路径或名称')
+    model_group.add_argument('--target-model', type=str, default=None,
+                           help='目标模型路径（用于微调）')
+    
+    # API参数
+    api_group = parser.add_argument_group('API参数')
+    api_group.add_argument('--api-key', type=str,
+                         help='API密钥（OpenAI/DeepSeek等）')
+    api_group.add_argument('--api-base', type=str,
+                         help='API基础URL（可选）')
     
     # 数据集参数
-    parser.add_argument('--dataset', type=str, default='mbpp',
-                       help='Dataset name (default: mbpp)')
-    parser.add_argument('--max-problems', type=int, default=100,
-                       help='Maximum number of problems to process')
+    data_group = parser.add_argument_group('数据集参数')
+    data_group.add_argument('--dataset', type=str, default='mbpp',
+                          choices=['mbpp', 'humaneval'],
+                          help='数据集名称')
+    data_group.add_argument('--max-problems', type=int, default=50,
+                          help='最大问题数量')
     
     # BTP算法参数
-    parser.add_argument('--num-beams', type=int, default=5,
-                       help='Number of beams for beam search')
-    parser.add_argument('--n-iterations', type=int, default=3,
-                       help='Number of PPER training iterations')
-    parser.add_argument('--batch-size', type=int, default=100,
-                       help='Batch size for training')
+    btp_group = parser.add_argument_group('BTP算法参数')
+    btp_group.add_argument('--num-beams', type=int, default=5,
+                         help='Beam Search数量')
+    btp_group.add_argument('--n-iterations', type=int, default=2,
+                         help='PPER训练迭代次数')
+    btp_group.add_argument('--batch-size', type=int, default=50,
+                         help='训练批大小')
     
     # 采样参数
-    parser.add_argument('--sampling-method', type=str, default='power', 
-                       choices=['power', 'rank'],
-                       help='Sampling method: power or rank')
-    parser.add_argument('--sampling-alpha', type=float, default=1.0,
-                       help='Alpha parameter for sampling')
-    parser.add_argument('--p2value-alpha', type=float, default=0.5,
-                       help='Alpha parameter for P2Value calculation')
+    sampling_group = parser.add_argument_group('采样参数')
+    sampling_group.add_argument('--sampling-method', type=str, default='power', 
+                              choices=['power', 'rank'],
+                              help='采样方法')
+    sampling_group.add_argument('--sampling-alpha', type=float, default=1.0,
+                              help='采样α参数')
+    sampling_group.add_argument('--p2value-alpha', type=float, default=0.5,
+                              help='P2Value权重α')
     
     # LoRA参数
-    parser.add_argument('--use-lora', action='store_true', default=True,
-                       help='Use LoRA for efficient fine-tuning')
-    parser.add_argument('--lora-r', type=int, default=64,
-                       help='LoRA rank')
-    parser.add_argument('--lora-alpha', type=int, default=128,
-                       help='LoRA alpha')
-    parser.add_argument('--lora-dropout', type=float, default=0.1,
-                       help='LoRA dropout')
+    lora_group = parser.add_argument_group('LoRA参数')
+    lora_group.add_argument('--use-lora', action='store_true', default=True,
+                          help='使用LoRA微调')
+    lora_group.add_argument('--lora-r', type=int, default=16,
+                          help='LoRA rank')
+    lora_group.add_argument('--lora-alpha', type=int, default=32,
+                          help='LoRA alpha')
+    lora_group.add_argument('--lora-dropout', type=float, default=0.1,
+                          help='LoRA dropout')
     
     # 训练参数
-    parser.add_argument('--learning-rate', type=float, default=2e-5,
-                       help='Learning rate for fine-tuning')
-    parser.add_argument('--num-epochs', type=int, default=1,
-                       help='Number of training epochs per iteration')
-    parser.add_argument('--per-device-batch-size', type=int, default=4,
-                       help='Per device batch size')
-    parser.add_argument('--gradient-accumulation-steps', type=int, default=4,
-                       help='Gradient accumulation steps')
+    train_group = parser.add_argument_group('训练参数')
+    train_group.add_argument('--learning-rate', type=float, default=1e-4,
+                           help='学习率')
+    train_group.add_argument('--num-epochs', type=int, default=1,
+                           help='每轮迭代的训练轮数')
+    train_group.add_argument('--per-device-batch-size', type=int, default=2,
+                           help='每设备批大小')
+    train_group.add_argument('--gradient-accumulation-steps', type=int, default=4,
+                           help='梯度累积步数')
     
     # 输出参数
-    parser.add_argument('--output-dir', type=str, default='./btp_results',
-                       help='Output directory for results')
-    parser.add_argument('--checkpoint-dir', type=str, default='./btp_checkpoints',
-                       help='Directory for model checkpoints')
+    output_group = parser.add_argument_group('输出参数')
+    output_group.add_argument('--output-dir', type=str, default='./btp_results',
+                            help='结果输出目录')
+    output_group.add_argument('--checkpoint-dir', type=str, default='./btp_checkpoints',
+                            help='模型检查点目录')
     
     # 其他参数
     parser.add_argument('--seed', type=int, default=42,
-                       help='Random seed')
+                       help='随机种子')
     parser.add_argument('--debug', action='store_true',
-                       help='Enable debug logging')
+                       help='启用调试日志')
     
     args = parser.parse_args()
     
@@ -592,6 +888,8 @@ def main():
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(args.seed)
     
     # 准备LoRA配置
     lora_config = {
