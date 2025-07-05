@@ -375,62 +375,87 @@ def main():
     
     args = parser.parse_args()
     
-    print(f"Starting baseline experiment with {args.model_name} on {args.dataset}")
+    results = {}
+    pass_at_k = {}
+    error_info = None
     
-    # 创建实验实例
-    experiment = BaselineExperiment(
-        model_name=args.model_name,
-        dataset=args.dataset,
-        use_openai=args.use_openai
-    )
+    try:
+        print(f"Starting baseline experiment with {args.model_name} on {args.dataset}")
+        
+        # 创建实验实例
+        experiment = BaselineExperiment(
+            model_name=args.model_name,
+            dataset=args.dataset,
+            use_openai=args.use_openai
+        )
+        
+        # 运行实验
+        results = experiment.run_experiment(
+            num_samples=args.num_samples,
+            temperature=args.temperature,
+            max_problems=args.max_problems
+        )
+        
+        # 计算指标
+        pass_at_k = experiment.calculate_pass_at_k(results)
+        
+    except Exception as e:
+        error_info = str(e)
+        print(f"Experiment failed with error: {e}")
+        print("Saving partial results...")
     
-    # 运行实验
-    results = experiment.run_experiment(
-        num_samples=args.num_samples,
-        temperature=args.temperature,
-        max_problems=args.max_problems
-    )
-    
-    # 计算指标
-    pass_at_k = experiment.calculate_pass_at_k(results)
-    
-    # 保存结果
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_file = output_dir / f"baseline_results_{timestamp}.json"
-    
-    final_results = {
-        'experiment_config': {
-            'model_name': args.model_name,
-            'dataset': args.dataset,
-            'num_samples': args.num_samples,
-            'temperature': args.temperature,
-            'max_problems': args.max_problems,
-            'use_openai': args.use_openai
-        },
-        'results': results,
-        'metrics': pass_at_k,
-        'timestamp': timestamp
-    }
-    
-    with open(results_file, 'w') as f:
-        json.dump(final_results, f, indent=2, default=str)
-    
-    # 打印结果
-    print(f"\n{'='*50}")
-    print("EXPERIMENT RESULTS")
-    print(f"{'='*50}")
-    print(f"Model: {args.model_name}")
-    print(f"Dataset: {args.dataset}")
-    print(f"Problems tested: {len(results)}")
-    print(f"Use OpenAI: {args.use_openai}")
-    print(f"\nPass@k metrics:")
-    for metric, value in pass_at_k.items():
-        print(f"  {metric}: {value:.3f}")
-    
-    print(f"\nResults saved to: {results_file}")
+    # 无论是否有错误，都尝试保存结果
+    try:
+        output_dir = Path(args.output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        results_file = output_dir / f"baseline_results_{timestamp}.json"
+        
+        final_results = {
+            'experiment_config': {
+                'model_name': args.model_name,
+                'dataset': args.dataset,
+                'num_samples': args.num_samples,
+                'temperature': args.temperature,
+                'max_problems': args.max_problems,
+                'use_openai': args.use_openai
+            },
+            'results': results,
+            'metrics': pass_at_k,
+            'error_info': error_info,
+            'timestamp': timestamp
+        }
+        
+        with open(results_file, 'w') as f:
+            json.dump(final_results, f, indent=2, default=str)
+        
+        # 打印结果
+        print(f"\n{'='*50}")
+        print("EXPERIMENT RESULTS")
+        print(f"{'='*50}")
+        print(f"Model: {args.model_name}")
+        print(f"Dataset: {args.dataset}")
+        print(f"Problems tested: {len(results)}")
+        print(f"Use OpenAI: {args.use_openai}")
+        if error_info:
+            print(f"Error occurred: {error_info}")
+        print(f"\nPass@k metrics:")
+        for metric, value in pass_at_k.items():
+            print(f"  {metric}: {value:.3f}")
+        
+        print(f"\nResults saved to: {results_file}")
+        
+    except Exception as save_error:
+        print(f"Failed to save results: {save_error}")
+        # 最后尝试保存到当前目录
+        try:
+            fallback_file = f"baseline_results_fallback_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(fallback_file, 'w') as f:
+                json.dump(final_results, f, indent=2, default=str)
+            print(f"Results saved to fallback location: {fallback_file}")
+        except Exception as fallback_error:
+            print(f"Even fallback save failed: {fallback_error}")
 
 
 if __name__ == "__main__":
