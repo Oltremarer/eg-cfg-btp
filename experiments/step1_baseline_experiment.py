@@ -103,38 +103,38 @@ class BaselineExperiment:
     
     def generate_solutions_openai(self, problem, num_samples=10, temperature=0.8):
         """使用OpenAI API生成解决方案"""
-        # 构造提示
+        # 构造提示 - 使用英文提示词确保与step2一致
         if self.dataset == "mbpp":
-            prompt = f"""
-请解决以下编程问题：
+            prompt = f"""Solve the following programming problem:
 
-问题描述：
-{problem['text']}
+Problem: {problem['text']}
 
-测试用例：
+Test cases:
 {chr(10).join(problem['test_list'])}
 
-请编写一个Python函数来解决这个问题。只返回函数代码，不要包含额外的解释。
+Provide a complete Python function:
+
+```python
 """
         elif self.dataset == "humaneval":
-            prompt = f"""
-请完成以下Python函数：
+            prompt = f"""Complete the following Python function:
 
 {problem['prompt']}
 
-请只返回完整的函数实现。
+```python
 """
         else:
             # APPS dataset
-            prompt = f"""
-请解决以下编程问题：
+            prompt = f"""Solve the following programming problem:
 
-{problem['question']}
+Problem: {problem['question']}
 
-测试用例：
+Test cases:
 {chr(10).join(problem['test_list'])}
 
-请编写一个Python函数来解决这个问题。
+Provide a complete Python function:
+
+```python
 """
         
         try:
@@ -244,16 +244,16 @@ class BaselineExperiment:
             print("Local model not loaded")
             return []
         
-        # 构造提示
+        # 构造提示 - 使用英文提示词确保与step2一致
         if self.dataset == "mbpp":
-            prompt = f"""
-问题描述：
-{problem['text']}
+            prompt = f"""Solve the following programming problem:
 
-测试用例：
+Problem: {problem['text']}
+
+Test cases:
 {chr(10).join(problem['test_list'])}
 
-请编写一个Python函数来解决这个问题：
+Provide a complete Python function:
 
 ```python
 """
@@ -261,14 +261,14 @@ class BaselineExperiment:
             prompt = f"""{problem['prompt']}"""
         else:
             # APPS dataset
-            prompt = f"""
-问题：
-{problem['question']}
+            prompt = f"""Solve the following programming problem:
 
-测试用例：
+Problem: {problem['question']}
+
+Test cases:
 {chr(10).join(problem['test_list'])}
 
-请编写一个Python函数来解决这个问题：
+Provide a complete Python function:
 
 ```python
 """

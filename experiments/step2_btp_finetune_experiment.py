@@ -923,20 +923,58 @@ def main():
         lora_config=lora_config
     )
     
-    # 运行实验
-    results = experiment.run_experiment(
-        max_problems=args.max_problems,
-        num_beams=args.num_beams,
-        n_iterations=args.n_iterations,
-        batch_size=args.batch_size,
-        output_dir=args.output_dir
-    )
-    
-    print("\nExperiment completed!")
-    print(f"Final stats:")
-    for key, value in results['final_stats'].items():
-        print(f"  {key}: {value}")
+    # 运行实验 - 添加异常处理
+    try:
+        results = experiment.run_experiment(
+            max_problems=args.max_problems,
+            num_beams=args.num_beams,
+            n_iterations=args.n_iterations,
+            batch_size=args.batch_size,
+            output_dir=args.output_dir
+        )
+        
+        print("\nExperiment completed successfully!")
+        print(f"Final stats:")
+        for key, value in results['final_stats'].items():
+            print(f"  {key}: {value}")
+        
+        return 0
+        
+    except Exception as e:
+        print(f"❌ Experiment failed: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # 保存错误信息
+        try:
+            os.makedirs(args.output_dir, exist_ok=True)
+            error_info = {
+                'error': str(e),
+                'traceback': traceback.format_exc(),
+                'timestamp': datetime.now().isoformat(),
+                'experiment_type': 'BTP_FineTune',
+                'source_model': args.source_model,
+                'target_model': args.target_model,
+                'dataset': args.dataset,
+                'max_problems': args.max_problems,
+                'num_beams': args.num_beams,
+                'n_iterations': args.n_iterations,
+                'batch_size': args.batch_size,
+                'status': 'failed'
+            }
+            
+            error_file = os.path.join(args.output_dir, f"error_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+            with open(error_file, 'w', encoding='utf-8') as f:
+                json.dump(error_info, f, indent=2, ensure_ascii=False)
+            
+            print(f"Error log saved to: {error_file}")
+            
+        except Exception as save_error:
+            print(f"Failed to save error log: {save_error}")
+        
+        return 1
 
 
 if __name__ == "__main__":
-    main() 
+    import sys
+    sys.exit(main()) 
