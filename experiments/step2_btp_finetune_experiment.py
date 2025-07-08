@@ -384,7 +384,7 @@ class ExperienceReplayBuffer:
         """获取所有经验"""
         return list(self.buffer)
     
-    def get_stats(self) -> Dict:
+    def get_stats(self, include_samples: bool = False, max_samples: int = 10) -> Dict:
         """获取缓冲区统计信息"""
         if not self.buffer:
             return {}
@@ -393,13 +393,39 @@ class ExperienceReplayBuffer:
         p2values = [exp['p2value'] for exp in experiences]
         pass_rates = [exp['pass_rate'] for exp in experiences]
         
-        return {
+        stats = {
             'total_experiences': len(experiences),
             'avg_p2value': np.mean(p2values),
             'std_p2value': np.std(p2values),
             'avg_pass_rate': np.mean(pass_rates),
-            'fully_passed_count': sum(1 for exp in experiences if exp['pass_rate'] >= 1.0)
+            'fully_passed_count': sum(1 for exp in experiences if exp['pass_rate'] >= 1.0),
+            'zero_passed_count': sum(1 for exp in experiences if exp['pass_rate'] == 0.0),
+            'max_p2value': np.max(p2values),
+            'min_p2value': np.min(p2values)
         }
+        
+        # 如果需要包含样本数据，添加一些代表性样本
+        if include_samples:
+            # 获取不同通过率的样本
+            samples = []
+            
+            # 尝试找到通过率最高的样本
+            best_experiences = sorted(experiences, key=lambda x: x['pass_rate'], reverse=True)[:max_samples//2]
+            samples.extend(best_experiences)
+            
+            # 添加一些随机样本
+            import random
+            remaining_samples = max_samples - len(samples)
+            if remaining_samples > 0 and len(experiences) > len(samples):
+                random_experiences = random.sample(
+                    [exp for exp in experiences if exp not in samples], 
+                    min(remaining_samples, len(experiences) - len(samples))
+                )
+                samples.extend(random_experiences)
+            
+            stats['sample_experiences'] = samples
+        
+        return stats
 
 
 class BTPModelManager:
@@ -722,13 +748,20 @@ Provide a complete Python function:
         self.phase1_beam_search_sampling(problems_list, num_beams)
         
         # 输出初始统计
-        initial_stats = self.experience_buffer.get_stats()
+        initial_stats = self.experience_buffer.get_stats(include_samples=True, max_samples=20)
         print(f"\nInitial experience buffer stats:")
         for key, value in initial_stats.items():
-            print(f"  {key}: {value}")
+            if key != 'sample_experiences':  # 不打印样本数据，太长了
+                print(f"  {key}: {value}")
         
         # 阶段2: PPER微调
         self.phase2_pper_training(n_iterations, batch_size)
+        
+        # 获取最终统计信息（包含样本）
+        final_stats = self.experience_buffer.get_stats(include_samples=True, max_samples=20)
+        
+        # 获取所有经验数据
+        all_experiences = self.experience_buffer.get_all_experiences()
         
         # 保存实验结果
         results = {
@@ -744,7 +777,8 @@ Provide a complete Python function:
             'n_iterations': n_iterations,
             'batch_size': batch_size,
             'initial_stats': initial_stats,
-            'final_stats': self.experience_buffer.get_stats(),
+            'final_stats': final_stats,
+            'all_experiences': all_experiences,  # 保存所有生成的代码和结果
             'timestamp': datetime.now().isoformat()
         }
         
@@ -752,10 +786,59 @@ Provide a complete Python function:
         os.makedirs(output_dir, exist_ok=True)
         result_file = os.path.join(output_dir, f"btp_finetune_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         
+        # 保存完整结果（包含所有生成的代码）
+        print(f"\n💾 正在保存完整实验结果...")
+        print(f"   - 包含 {len(all_experiences)} 个完整的代码生成样本")
+        print(f"   - 每个样本包含：生成代码、测试结果、通过率、概率等")
+        
         with open(result_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         
-        print(f"\nExperiment results saved to: {result_file}")
+        # 检查文件大小
+        import os
+        file_size = os.path.getsize(result_file) / (1024 * 1024)  # MB
+        print(f"\n✅ 实验结果已保存到: {result_file}")
+        print(f"📁 文件大小: {file_size:.2f} MB")
+        print(f"📊 包含内容:")
+        print(f"   - 实验配置和统计信息")
+        print(f"   - {len(all_experiences)} 个完整的代码生成记录")
+        print(f"   - 每个问题的测试结果详情")
+        
+        # 打印一些生成的代码样本用于调试
+        print("\n" + "="*80)
+        print("🔍 生成代码样本分析 (用于调试0%通过率问题)")
+        print("="*80)
+        
+        if 'sample_experiences' in final_stats:
+            samples = final_stats['sample_experiences'][:5]  # 只看前5个
+            for i, exp in enumerate(samples):
+                print(f"\n📝 样本 {i+1}:")
+                print(f"   问题ID: {exp.get('problem_id', 'N/A')}")
+                print(f"   通过率: {exp.get('pass_rate', 0):.2f}")
+                print(f"   生成概率: {exp.get('possibility', 0):.4f}")
+                print(f"   生成代码:")
+                print("   " + "-"*60)
+                code_lines = str(exp.get('code', '')).split('\n')
+                for line in code_lines[:10]:  # 只显示前10行
+                    print(f"   {line}")
+                if len(code_lines) > 10:
+                    print(f"   ... (还有 {len(code_lines)-10} 行)")
+                print("   " + "-"*60)
+                
+                # 显示测试结果
+                if 'test_results' in exp and exp['test_results']:
+                    test_results = exp['test_results']
+                    passed = sum(1 for r in test_results.values() if r.get('result', False))
+                    total = len(test_results)
+                    print(f"   测试结果: {passed}/{total} 通过")
+                    
+                    # 显示失败的测试（如果有）
+                    failed_tests = [k for k, v in test_results.items() if not v.get('result', False)]
+                    if failed_tests:
+                        print(f"   失败测试: {failed_tests[:3]}")  # 只显示前3个失败测试
+                
+        print("="*80)
+        
         return results
 
 
