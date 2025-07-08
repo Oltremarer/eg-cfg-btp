@@ -598,10 +598,21 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     
     def format_prompt(self, problem: Dict[str, Any]) -> str:
         """使用英文提示模板格式化问题"""
-        return self.config['prompt_template'].format(
-            problem_text=problem['text'],
-            test_examples="\n".join([f"  {test}" for test in problem.get('test_list', [])])
-        )
+        # 使用正确的MBPP提示模板
+        test_examples = "\n".join([f"  {test}" for test in problem.get('test_list', [])])
+        
+        prompt = f"""Solve the following programming problem:
+
+Problem: {problem['text']}
+
+Test cases:
+{test_examples}
+
+Provide a complete Python function:
+
+```python
+"""
+        return prompt
     
     def phase1_beam_search_sampling(self, problems_list: List[tuple], num_beams: int):
         """阶段1: Beam Search采样"""
