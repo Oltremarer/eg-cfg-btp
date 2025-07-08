@@ -389,7 +389,7 @@ class ExperienceReplayBuffer:
         """获取所有经验"""
         return list(self.experiences)
     
-    def get_stats(self) -> Dict:
+    def get_stats(self, include_samples: bool = False, max_samples: int = 10) -> Dict:
         """获取统计信息"""
         if not self.experiences:
             return {}
@@ -397,7 +397,7 @@ class ExperienceReplayBuffer:
         p2values = [exp.get('p2value', 0.0) for exp in self.experiences]
         pass_rates = [exp.get('pass_rate', 0.0) for exp in self.experiences]
         
-        return {
+        stats = {
             'total_experiences': len(self.experiences),
             'avg_p2value': np.mean(p2values),
             'max_p2value': np.max(p2values), 
@@ -406,6 +406,28 @@ class ExperienceReplayBuffer:
             'fully_passed_count': sum(1 for pr in pass_rates if pr >= 1.0),
             'zero_passed_count': sum(1 for pr in pass_rates if pr == 0.0)
         }
+        
+        # 如果需要包含样本数据，添加一些代表性样本
+        if include_samples:
+            samples = []
+            
+            # 获取通过率最高的样本
+            best_experiences = sorted(self.experiences, key=lambda x: x.get('pass_rate', 0), reverse=True)[:max_samples//2]
+            samples.extend(best_experiences)
+            
+            # 添加一些随机样本
+            import random
+            remaining_samples = max_samples - len(samples)
+            if remaining_samples > 0 and len(self.experiences) > len(samples):
+                random_experiences = random.sample(
+                    [exp for exp in self.experiences if exp not in samples], 
+                    min(remaining_samples, len(self.experiences) - len(samples))
+                )
+                samples.extend(random_experiences)
+            
+            stats['sample_experiences'] = samples
+        
+        return stats
 
 
 class MBTPFineTuningManager:
@@ -674,7 +696,8 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     
     def get_experiment_results(self) -> Dict[str, Any]:
         """获取实验结果"""
-        stats = self.experience_buffer.get_stats()
+        stats = self.experience_buffer.get_stats(include_samples=True, max_samples=20)
+        all_experiences = self.experience_buffer.get_all_experiences()
         
         results = {
             'experiment_type': 'MBPP_BTP',
@@ -685,8 +708,44 @@ class MBBPBTPExperiment(Step2BTPExperiment):
             'sampling_alpha': self.sampling_alpha,
             'p2value_alpha': self.p2value_alpha,
             'experience_stats': stats,
+            'all_experiences': all_experiences,  # 保存所有生成的代码和结果
             'config': self.get_experiment_config()
         }
+        
+        # 打印一些生成的代码样本用于调试
+        print("\n" + "="*80)
+        print("🔍 生成代码样本分析 (用于调试0%通过率问题)")
+        print("="*80)
+        
+        if 'sample_experiences' in stats and stats['sample_experiences']:
+            samples = stats['sample_experiences'][:5]  # 只看前5个
+            for i, exp in enumerate(samples):
+                print(f"\n📝 样本 {i+1}:")
+                print(f"   问题ID: {exp.get('problem_id', 'N/A')}")
+                print(f"   通过率: {exp.get('pass_rate', 0):.2f}")
+                print(f"   生成概率: {exp.get('possibility', 0):.4f}")
+                print(f"   生成代码:")
+                print("   " + "-"*60)
+                code_lines = str(exp.get('code', '')).split('\n')
+                for line in code_lines[:10]:  # 只显示前10行
+                    print(f"   {line}")
+                if len(code_lines) > 10:
+                    print(f"   ... (还有 {len(code_lines)-10} 行)")
+                print("   " + "-"*60)
+                
+                # 显示测试结果
+                if 'test_results' in exp and exp['test_results']:
+                    test_results = exp['test_results']
+                    passed = sum(1 for r in test_results.values() if r.get('result', False))
+                    total = len(test_results)
+                    print(f"   测试结果: {passed}/{total} 通过")
+                    
+                    # 显示失败的测试（如果有）
+                    failed_tests = [k for k, v in test_results.items() if not v.get('result', False)]
+                    if failed_tests:
+                        print(f"   失败测试: {failed_tests[:3]}")  # 只显示前3个失败测试
+        
+        print("="*80)
         
         return results
 
