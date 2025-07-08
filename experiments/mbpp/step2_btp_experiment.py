@@ -44,7 +44,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 # 导入共享基础类
 from experiments.shared.base_experiment import Step2BTPExperiment  
 from experiments.shared.dataset_configs import MBPP_CONFIG
-from experiments.shared.common_utils import safe_execute_code, load_mbpp_dataset
+from experiments.shared.common_utils import safe_execute_code, load_mbpp_problems
 
 # 条件导入
 try:
@@ -572,7 +572,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     
     def load_dataset(self) -> Dict[str, Any]:
         """加载MBPP数据集"""
-        return load_mbpp_dataset()
+        return load_mbpp_problems()
     
     def format_prompt(self, problem: Dict[str, Any]) -> str:
         """使用英文提示模板格式化问题"""
