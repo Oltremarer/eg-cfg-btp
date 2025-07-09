@@ -548,20 +548,22 @@ class MBBPBTPExperiment(Step2BTPExperiment):
                  api_key: str = None, api_base: str = None,
                  sampling_method: str = "power", sampling_alpha: float = 1.0, 
                  p2value_alpha: float = 0.5):
-        super().__init__()
         
-        # 设置模型信息
+        # 设置基本模型信息
         self.model_name = model_name or "deepseek-ai/deepseek-coder-1.3b-instruct"
         self.model_type = model_type
         self.api_key = api_key
         self.api_base = api_base
         
-        # BTP特定参数
+        # BTP特定参数  
         self.sampling_method = sampling_method
         self.sampling_alpha = sampling_alpha
         self.p2value_alpha = p2value_alpha
         
-        # 初始化智能配置
+        # 调用父类构造函数
+        super().__init__(dataset_name="mbpp", model_name=self.model_name)
+        
+        # 初始化智能配置（在父类构造函数之后）
         self.model_info = detect_model_info(self.model_name)
         self.model_config = get_model_config(self.model_name)
         self.optimal_params = get_optimal_generation_params(self.model_name, "mbpp")
