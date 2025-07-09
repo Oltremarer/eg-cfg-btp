@@ -752,7 +752,7 @@ Provide a complete Python function:
         print(f"\nInitial experience buffer stats:")
         for key, value in initial_stats.items():
             if key != 'sample_experiences':  # 不打印样本数据，太长了
-                print(f"  {key}: {value}")
+            print(f"  {key}: {value}")
         
         # 阶段2: PPER微调
         self.phase2_pper_training(n_iterations, batch_size)
