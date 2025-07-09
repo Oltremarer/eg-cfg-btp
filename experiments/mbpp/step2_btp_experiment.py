@@ -79,6 +79,9 @@ from eg_cfg.mbpp_utils import run_tests
 if HF_AVAILABLE:
     from eg_cfg.model_utils import setup_device, load_model, load_tokenizer
 
+from experiments.prompt_templates import get_model_prompt, detect_model_info, validate_model_compatibility
+from experiments.shared.model_configs import get_model_config, get_optimal_generation_params
+
 
 class ModelAdapter:
     """统一模型适配器 - 支持本地和API模型"""
@@ -539,54 +542,49 @@ class MBTPFineTuningManager:
 
 
 class MBBPBTPExperiment(Step2BTPExperiment):
-    """MBPP数据集的BTP实验"""
+    """MBPP数据集的BTP实验 - 使用智能Prompt适配系统"""
     
-    def __init__(self, model_name: str, mode: str = "local", api_key: str = None,
-                 target_model: str = None, sampling_method: str = "power",
-                 sampling_alpha: float = 1.0, p2value_alpha: float = 0.5):
+    def __init__(self, model_name: str = None, model_type: str = "local", 
+                 api_key: str = None, api_base: str = None):
+        super().__init__()
         
-        # 初始化基类
-        super().__init__("mbpp", model_name)
-        
-        # BTP特定参数
-        self.mode = mode
+        # 设置模型信息
+        self.model_name = model_name or "deepseek-ai/deepseek-coder-1.3b-instruct"
+        self.model_type = model_type
         self.api_key = api_key
-        self.target_model = target_model
-        self.sampling_method = sampling_method
-        self.sampling_alpha = sampling_alpha
-        self.p2value_alpha = p2value_alpha
+        self.api_base = api_base
         
-        # 初始化组件
-        self._setup_model_adapter()
-        self.experience_buffer = ExperienceReplayBuffer()
-        self.sampler = PrioritizedSampler(sampling_method, sampling_alpha)
-        self.p2calculator = P2ValueCalculator(p2value_alpha)
+        # 初始化智能配置
+        self.model_info = detect_model_info(self.model_name)
+        self.model_config = get_model_config(self.model_name)
+        self.optimal_params = get_optimal_generation_params(self.model_name, "mbpp")
         
-        # 微调管理器（如果需要）
-        if mode == "finetune":
-            self.finetuning_manager = MBTPFineTuningManager(self.model_adapter, use_lora=True)
-        else:
-            self.finetuning_manager = None
-    
-    def _setup_model_adapter(self):
-        """设置模型适配器"""
-        if self.mode == "openai":
-            self.model_adapter = ModelAdapter(
-                self.model_name, 
-                model_type="openai", 
-                api_key=self.api_key
-            )
-        elif self.mode in ["deepseek", "api"]:
-            self.model_adapter = ModelAdapter(
-                self.model_name, 
-                model_type="api", 
-                api_key=self.api_key
-            )
-        else:  # local or finetune
-            self.model_adapter = ModelAdapter(
-                self.model_name, 
-                model_type="local"
-            )
+        # 验证模型兼容性
+        compatibility = validate_model_compatibility(self.model_name, "mbpp")
+        if compatibility["warnings"]:
+            print("⚠️  模型兼容性警告:")
+            for warning in compatibility["warnings"]:
+                print(f"   - {warning}")
+        
+        if compatibility["recommendations"]:
+            print("💡 优化建议:")
+            for rec in compatibility["recommendations"]:
+                print(f"   - {rec}")
+        
+                 # 设置adapter
+         self.adapter = ModelAdapter(
+             model_name=self.model_name,
+             model_type=self.model_type,
+             api_key=self.api_key or "",  # 确保不是None
+             api_base=self.api_base or "",  # 确保不是None
+             **self.optimal_params  # 使用优化参数
+         )
+        
+        print(f"🚀 初始化完成:")
+        print(f"   模型: {self.model_name}")
+        print(f"   家族: {self.model_info.family.value}")
+        print(f"   类型: {self.model_info.type.value}")
+        print(f"   优化参数: {self.optimal_params}")
     
     def load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
         """加载MBPP配置"""
@@ -597,22 +595,84 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         return load_mbpp_problems()
     
     def format_prompt(self, problem: Dict[str, Any]) -> str:
-        """使用英文提示模板格式化问题"""
-        # 使用正确的MBPP提示模板
-        test_examples = "\n".join([f"  {test}" for test in problem.get('test_list', [])])
+        """使用智能Prompt模板格式化问题"""
         
-        prompt = f"""Solve the following programming problem:
-
-Problem: {problem['text']}
-
-Test cases:
-{test_examples}
-
-Provide a complete Python function:
-
-```python
-"""
+        # 检查是否需要使用few-shot examples
+        use_examples = self.model_config.use_examples
+        examples = None
+        
+        if use_examples:
+            # 为DeepSeek等模型准备few-shot examples
+            examples = self._get_few_shot_examples()
+        
+        # 使用智能prompt引擎生成prompt
+        prompt = get_model_prompt(
+            model_name=self.model_name,
+            dataset="mbpp", 
+            problem=problem,
+            system_prompt=None,  # 使用默认系统prompt
+            use_examples=use_examples,
+            examples=examples
+        )
+        
+        # 如果返回的是messages格式（OpenAI/Claude），转换为字符串
+        if isinstance(prompt, list):
+            # 提取用户消息内容
+            for msg in prompt:
+                if msg["role"] == "user":
+                    return msg["content"]
+            return str(prompt)
+        
         return prompt
+    
+    def _get_few_shot_examples(self) -> List[Dict[str, Any]]:
+        """获取few-shot示例（特别针对DeepSeek等模型）"""
+        
+        # MBPP的经典示例，已经验证过效果
+        examples = [
+            {
+                "problem": "Write a function to find the similar elements from the given two tuple lists.",
+                "test_cases": [
+                    "assert similar_elements((3, 4, 5, 6),(5, 7, 4, 10)) == (4, 5)",
+                    "assert similar_elements((1, 2, 3, 4),(5, 4, 3, 7)) == (3, 4)",
+                    "assert similar_elements((11, 12, 14, 13),(17, 15, 14, 13)) == (13, 14)"
+                ],
+                "solution": """def similar_elements(test_tup1, test_tup2):
+  res = tuple(set(test_tup1) & set(test_tup2))
+  return (res)"""
+            },
+            {
+                "problem": "Write a python function to identify non-prime numbers.",
+                "test_cases": [
+                    "assert is_not_prime(2) == False",
+                    "assert is_not_prime(10) == True", 
+                    "assert is_not_prime(35) == True"
+                ],
+                "solution": """import math
+def is_not_prime(n):
+    result = False
+    for i in range(2,int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            result = True
+    return result"""
+            },
+            {
+                "problem": "Write a function to find the largest integers from a given list of numbers using heap queue algorithm.",
+                "test_cases": [
+                    "assert heap_queue_largest( [25, 35, 22, 85, 14, 65, 75, 22, 58],3)==[85, 75, 65]",
+                    "assert heap_queue_largest( [25, 35, 22, 85, 14, 65, 75, 22, 58],2)==[85, 75]",
+                    "assert heap_queue_largest( [25, 35, 22, 85, 14, 65, 75, 22, 58],5)==[85, 75, 65, 58, 35]"
+                ],
+                "solution": """import heapq as hq
+def heap_queue_largest(nums,n):
+  largest_nums = hq.nlargest(n, nums)
+  return largest_nums"""
+            }
+        ]
+        
+        # 根据模型配置选择示例数量
+        max_examples = self.model_config.preferred_examples_count
+        return examples[:max_examples]
     
     def phase1_beam_search_sampling(self, problems_list: List[tuple], num_beams: int):
         """阶段1: Beam Search采样"""
@@ -623,7 +683,7 @@ Provide a complete Python function:
             
             try:
                 # 生成候选解
-                candidates = self.model_adapter.generate(
+                candidates = self.adapter.generate(
                     prompt, 
                     num_beams=num_beams,
                     temperature=0.8,
@@ -713,8 +773,8 @@ Provide a complete Python function:
         results = {
             'experiment_type': 'MBPP_BTP',
             'model_name': self.model_name,
-            'mode': self.mode,
-            'target_model': self.target_model,
+            'mode': self.model_type,
+            'target_model': self.model_name, # 因为微调模式下目标模型就是当前模型
             'sampling_method': self.sampling_method,
             'sampling_alpha': self.sampling_alpha,
             'p2value_alpha': self.p2value_alpha,
@@ -856,10 +916,7 @@ def main():
         model_name=args.model,
         mode=args.mode,
         api_key=args.api_key,
-        target_model=args.target_model,
-        sampling_method=args.sampling_method,
-        sampling_alpha=args.sampling_alpha,
-        p2value_alpha=args.p2value_alpha
+        api_base=None # API base 参数在 ModelAdapter 中处理
     )
     
     # 运行实验
