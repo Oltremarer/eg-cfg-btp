@@ -147,6 +147,8 @@ class ModelAdapter:
             return self._generate_openai(prompt, **generation_kwargs)
         elif self.model_type in ["deepseek", "api"]:
             return self._generate_api(prompt, **generation_kwargs)
+        else:
+            raise ValueError(f"不支持的模型类型: {self.model_type}")
     
     def _generate_local(self, prompt: str, num_beams: int = 5, 
                        temperature: float = 0.8, max_tokens: int = 512,
@@ -617,8 +619,9 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     def format_prompt(self, problem: Dict[str, Any]) -> str:
         """使用智能Prompt模板格式化问题"""
         
-        # 检查是否需要使用few-shot examples
-        use_examples = self.model_config.use_examples
+        # 临时禁用few-shot examples以修复0%通过率问题
+        # TODO: 后续优化few-shot examples的prompt模板
+        use_examples = False  # 原来是：self.model_config.use_examples
         examples = None
         
         if use_examples:
