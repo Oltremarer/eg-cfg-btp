@@ -932,9 +932,12 @@ def main():
     # 创建实验实例
     experiment = MBBPBTPExperiment(
         model_name=args.model,
-        mode=args.mode,
+        model_type=args.mode,  # 修复参数名：mode -> model_type
         api_key=args.api_key,
-        api_base=None # API base 参数在 ModelAdapter 中处理
+        api_base=None,  # API base 参数在 ModelAdapter 中处理
+        sampling_method=args.sampling_method,
+        sampling_alpha=args.sampling_alpha,
+        p2value_alpha=args.p2value_alpha
     )
     
     # 运行实验
