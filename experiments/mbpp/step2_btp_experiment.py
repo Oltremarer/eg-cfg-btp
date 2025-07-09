@@ -545,7 +545,9 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     """MBPP数据集的BTP实验 - 使用智能Prompt适配系统"""
     
     def __init__(self, model_name: str = None, model_type: str = "local", 
-                 api_key: str = None, api_base: str = None):
+                 api_key: str = None, api_base: str = None,
+                 sampling_method: str = "power", sampling_alpha: float = 1.0, 
+                 p2value_alpha: float = 0.5):
         super().__init__()
         
         # 设置模型信息
@@ -553,6 +555,11 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         self.model_type = model_type
         self.api_key = api_key
         self.api_base = api_base
+        
+        # BTP特定参数
+        self.sampling_method = sampling_method
+        self.sampling_alpha = sampling_alpha
+        self.p2value_alpha = p2value_alpha
         
         # 初始化智能配置
         self.model_info = detect_model_info(self.model_name)
@@ -571,14 +578,25 @@ class MBBPBTPExperiment(Step2BTPExperiment):
             for rec in compatibility["recommendations"]:
                 print(f"   - {rec}")
         
-                 # 设置adapter
-         self.adapter = ModelAdapter(
-             model_name=self.model_name,
-             model_type=self.model_type,
-             api_key=self.api_key or "",  # 确保不是None
-             api_base=self.api_base or "",  # 确保不是None
-             **self.optimal_params  # 使用优化参数
-         )
+        # 设置adapter
+        self.adapter = ModelAdapter(
+            model_name=self.model_name,
+            model_type=self.model_type,
+            api_key=self.api_key or "",  # 确保不是None
+            api_base=self.api_base or "",  # 确保不是None
+            **self.optimal_params  # 使用优化参数
+        )
+        
+        # 初始化BTP组件
+        self.experience_buffer = ExperienceReplayBuffer()
+        self.sampler = PrioritizedSampler(sampling_method, sampling_alpha)
+        self.p2calculator = P2ValueCalculator(p2value_alpha)
+        
+        # 微调管理器（如果需要）
+        if model_type == "finetune":
+            self.finetuning_manager = MBTPFineTuningManager(self.adapter, use_lora=True)
+        else:
+            self.finetuning_manager = None
         
         print(f"🚀 初始化完成:")
         print(f"   模型: {self.model_name}")
