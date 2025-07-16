@@ -101,7 +101,7 @@ class ModelAdapter:
     
     def _setup_model(self):
         """设置模型"""
-        if self.model_type == "local":
+        if self.model_type == "local" or self.model_type == "finetune":
             self._setup_local_model()
         elif self.model_type == "openai":
             self._setup_openai_model()
@@ -141,7 +141,7 @@ class ModelAdapter:
     
     def generate(self, prompt: str, **generation_kwargs) -> List[Dict]:
         """统一生成接口"""
-        if self.model_type == "local":
+        if self.model_type == "local" or self.model_type == "finetune":
             return self._generate_local(prompt, **generation_kwargs)
         elif self.model_type == "openai":
             return self._generate_openai(prompt, **generation_kwargs)
