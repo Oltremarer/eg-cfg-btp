@@ -15,9 +15,7 @@ def setup_device():
 def load_model(model_name: str, device):
     # 检查是否是本地路径
     if os.path.exists(model_name) and os.path.isdir(model_name):
-        # 本地检查点，需要特殊处理
         print(f"🔧 加载本地检查点: {model_name}")
-        
         # 优先查找adapter_config.json（LoRA adapter），否则查找config.json
         config_path = os.path.join(model_name, "adapter_config.json")
         if not os.path.exists(config_path):
@@ -26,61 +24,38 @@ def load_model(model_name: str, device):
             try:
                 with open(config_path, 'r') as f:
                     config = json.load(f)
-                
-                # 检查是否是LoRA检查点
+                print(f"【DEBUG】读取到config: {config}")
                 if "peft_type" in config or "base_model_name_or_path" in config:
-                    print("🔧 检测到LoRA微调检查点，使用PEFT加载")
+                    print("【DEBUG】进入LoRA分支，准备加载PEFT模型")
                     try:
                         from peft import PeftModel
-                        
-                        # 加载tokenizer
                         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-                        
-                        # 获取基础模型路径
                         base_model_path = config.get("base_model_name_or_path", "deepseek-ai/deepseek-coder-1.3b-instruct")
-                        print(f"🔧 加载基础模型: {base_model_path}")
-                        
-                        # 加载基础模型
+                        print(f"【DEBUG】加载基础模型: {base_model_path}")
                         base_model = AutoModelForCausalLM.from_pretrained(
                             base_model_path,
                             trust_remote_code=True,
                             torch_dtype="auto"
                         ).to(device)
-                        
-                        # 加载LoRA适配器
                         model = PeftModel.from_pretrained(base_model, model_name)
-                        print("✅ LoRA适配器加载成功")
-                        
+                        print("【DEBUG】LoRA适配器加载成功")
                         return model, tokenizer
-                        
                     except ImportError:
-                        print("⚠️  PEFT库未安装，尝试直接加载")
+                        print("【DEBUG】PEFT库未安装，无法加载LoRA")
+                        raise
                     except Exception as e:
-                        print(f"⚠️  LoRA加载失败: {e}，尝试直接加载")
+                        print(f"【DEBUG】LoRA加载失败: {e}")
+                        raise
             except Exception as e:
-                print(f"⚠️  读取配置文件失败: {e}，尝试直接加载")
-        
-        # 如果不是LoRA检查点或加载失败，尝试直接加载
-        print("🔧 尝试直接加载检查点")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name, 
-            trust_remote_code=True,
-            torch_dtype="auto"
-        ).to(device)
+                print(f"【DEBUG】读取配置文件失败: {e}")
+                raise
+        # 这里直接报错，不降级到transformers原生分支
+        raise ValueError("本地LoRA模型加载失败，请检查adapter_config.json和peft库")
     else:
         # 远程模型
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        if model_name == DEEPSEEK_CODER_V2_LITE_INSTRUCT_MODEL_NAME:
-            model = AutoModelForCausalLM.from_pretrained(
-                model_name, trust_remote_code=True
-            ).to(device)
-        else:
-            model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto").to(
-                device
-            )
-    #model = torch.compile(model)
-    return model, tokenizer
+        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto").to(device)
+        return model, tokenizer
 
 
 def load_tokenizer(model_name):
