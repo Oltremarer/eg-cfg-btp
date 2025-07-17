@@ -29,9 +29,9 @@ def load_model(model_name: str, device):
                     print("【DEBUG】进入LoRA分支，准备加载PEFT模型")
                     try:
                         from peft import PeftModel
-                        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
                         base_model_path = config.get("base_model_name_or_path", "deepseek-ai/deepseek-coder-1.3b-instruct")
                         print(f"【DEBUG】加载基础模型: {base_model_path}")
+                        tokenizer = AutoTokenizer.from_pretrained(base_model_path, trust_remote_code=True)
                         base_model = AutoModelForCausalLM.from_pretrained(
                             base_model_path,
                             trust_remote_code=True,
