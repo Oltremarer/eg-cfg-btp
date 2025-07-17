@@ -7,7 +7,7 @@ import json
 
 
 def setup_device():
-    device = torch.device("cuda if torch.cuda.is_available() else cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Running on: {device}")
     return device
 
@@ -18,8 +18,10 @@ def load_model(model_name: str, device):
         # 本地检查点，需要特殊处理
         print(f"🔧 加载本地检查点: {model_name}")
         
-        # 检查是否是LoRA微调检查点
-        config_path = os.path.join(model_name, "config.json")
+        # 优先查找adapter_config.json（LoRA adapter），否则查找config.json
+        config_path = os.path.join(model_name, "adapter_config.json")
+        if not os.path.exists(config_path):
+            config_path = os.path.join(model_name, "config.json")
         if os.path.exists(config_path):
             try:
                 with open(config_path, 'r') as f:
@@ -35,7 +37,7 @@ def load_model(model_name: str, device):
                         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
                         
                         # 获取基础模型路径
-                        base_model_path = config.get("base_model_name_or_path,deepseek-ai/deepseek-coder-1.3b-instruct")
+                        base_model_path = config.get("base_model_name_or_path", "deepseek-ai/deepseek-coder-1.3b-instruct")
                         print(f"🔧 加载基础模型: {base_model_path}")
                         
                         # 加载基础模型
@@ -52,11 +54,11 @@ def load_model(model_name: str, device):
                         return model, tokenizer
                         
                     except ImportError:
-                        print(⚠️  PEFT库未安装，尝试直接加载")
+                        print("⚠️  PEFT库未安装，尝试直接加载")
                     except Exception as e:
-                        print(f⚠️  LoRA加载失败: {e}，尝试直接加载")
+                        print(f"⚠️  LoRA加载失败: {e}，尝试直接加载")
             except Exception as e:
-                print(f⚠️  读取配置文件失败: {e}，尝试直接加载")
+                print(f"⚠️  读取配置文件失败: {e}，尝试直接加载")
         
         # 如果不是LoRA检查点或加载失败，尝试直接加载
         print("🔧 尝试直接加载检查点")
