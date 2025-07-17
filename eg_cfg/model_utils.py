@@ -3,19 +3,13 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from .consts import *
 import math
 import os
+import json
 
 
 def setup_device():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda if torch.cuda.is_available() else cpu")
     print(f"Running on: {device}")
     return device
-
-
-# In the model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
-# https://huggingface.co/deepseek-ai/DeepSeek-V2-Lite-Chat/discussions/8# $HOME/.cache/huggingface/modules/transformers_modules/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct/e434a23f91a5b4923cf698483/modeling_deepseek.py
-# line 1728- max_cache_length = past_key_values.get_max_length()
-# ++ max_cache_length = past_key_values.get_max_cache_shape()
-# model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True).to(device)
 
 
 def load_model(model_name: str, device):
@@ -23,6 +17,49 @@ def load_model(model_name: str, device):
     if os.path.exists(model_name) and os.path.isdir(model_name):
         # 本地检查点，需要特殊处理
         print(f"🔧 加载本地检查点: {model_name}")
+        
+        # 检查是否是LoRA微调检查点
+        config_path = os.path.join(model_name, "config.json")
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                
+                # 检查是否是LoRA检查点
+                if "peft_type" in config or "base_model_name_or_path" in config:
+                    print("🔧 检测到LoRA微调检查点，使用PEFT加载")
+                    try:
+                        from peft import PeftModel
+                        
+                        # 加载tokenizer
+                        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+                        
+                        # 获取基础模型路径
+                        base_model_path = config.get("base_model_name_or_path,deepseek-ai/deepseek-coder-1.3b-instruct")
+                        print(f"🔧 加载基础模型: {base_model_path}")
+                        
+                        # 加载基础模型
+                        base_model = AutoModelForCausalLM.from_pretrained(
+                            base_model_path,
+                            trust_remote_code=True,
+                            torch_dtype="auto"
+                        ).to(device)
+                        
+                        # 加载LoRA适配器
+                        model = PeftModel.from_pretrained(base_model, model_name)
+                        print("✅ LoRA适配器加载成功")
+                        
+                        return model, tokenizer
+                        
+                    except ImportError:
+                        print(⚠️  PEFT库未安装，尝试直接加载")
+                    except Exception as e:
+                        print(f⚠️  LoRA加载失败: {e}，尝试直接加载")
+            except Exception as e:
+                print(f⚠️  读取配置文件失败: {e}，尝试直接加载")
+        
+        # 如果不是LoRA检查点或加载失败，尝试直接加载
+        print("🔧 尝试直接加载检查点")
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         model = AutoModelForCausalLM.from_pretrained(
             model_name, 
