@@ -472,13 +472,14 @@ class MBTPFineTuningManager:
     def finetune_on_experiences(self, experiences: List[Dict], 
                                training_args: Optional[TrainingArguments] = None) -> None:
         """基于经验进行微调"""
+        print("进入finetune_on_experiences，经验数量：", len(experiences))
         if self.model_adapter.model_type != "local":
             print("⚠️  微调仅支持本地模型")
             return
-        
+        print("模型类型：", type(self.model_adapter.model))
         # 准备训练数据
         train_dataset = self._prepare_training_dataset(experiences)
-        
+        print("训练数据集准备完成，样本数：", len(train_dataset))
         if training_args is None:
             training_args = TrainingArguments(
                 output_dir=self.output_dir,
@@ -492,13 +493,11 @@ class MBTPFineTuningManager:
                 save_steps=100,
                 remove_unused_columns=False,
             )
-        
         # 数据整理器
         data_collator = DataCollatorForLanguageModeling(
             tokenizer=self.model_adapter.tokenizer,
             mlm=False,
         )
-        
         # 训练器
         trainer = Trainer(
             model=self.model_adapter.model,
@@ -506,11 +505,11 @@ class MBTPFineTuningManager:
             train_dataset=train_dataset,
             data_collator=data_collator,
         )
-        
-        print("🚀 开始微调...")
+        print("准备调用trainer.train()...")
         trainer.train()
+        print("train()完成，准备调用save_model...")
         trainer.save_model()
-        print("✅ 微调完成")
+        print("save_model调用完成")
     
     def _prepare_training_dataset(self, experiences: List[Dict]) -> Dataset:
         """准备训练数据集"""
