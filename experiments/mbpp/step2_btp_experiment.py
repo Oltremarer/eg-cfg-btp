@@ -490,7 +490,7 @@ class MBTPFineTuningManager:
                 learning_rate=1e-4,
                 fp16=True,
                 logging_steps=5,
-                save_steps=100,
+                save_steps=10,  # 从100改为10，更频繁地保存模型
                 remove_unused_columns=False,
             )
         # 数据整理器
