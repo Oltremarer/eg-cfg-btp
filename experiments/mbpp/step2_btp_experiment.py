@@ -439,9 +439,10 @@ class MBTPFineTuningManager:
     """MBPP BTP微调管理器"""
     
     def __init__(self, model_adapter: ModelAdapter, use_lora: bool = True, 
-                 lora_config: Optional[Dict] = None):
+                 lora_config: Optional[Dict] = None, output_dir: str = './mbpp_btp_checkpoints'):
         self.model_adapter = model_adapter
         self.use_lora = use_lora
+        self.output_dir = output_dir
         self.lora_config = lora_config or {
             'r': 16,
             'lora_alpha': 32,
@@ -480,7 +481,7 @@ class MBTPFineTuningManager:
         
         if training_args is None:
             training_args = TrainingArguments(
-                output_dir="./mbpp_btp_checkpoints",
+                output_dir=self.output_dir,
                 num_train_epochs=1,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
@@ -549,7 +550,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     def __init__(self, model_name: str = None, model_type: str = "local", 
                  api_key: str = None, api_base: str = None,
                  sampling_method: str = "power", sampling_alpha: float = 1.0, 
-                 p2value_alpha: float = 0.5):
+                 p2value_alpha: float = 0.5, output_model_dir: str = './mbpp_btp_checkpoints'):
         
         # 设置基本模型信息
         self.model_name = model_name or "deepseek-ai/deepseek-coder-1.3b-instruct"
@@ -561,6 +562,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         self.sampling_method = sampling_method
         self.sampling_alpha = sampling_alpha
         self.p2value_alpha = p2value_alpha
+        self.output_model_dir = output_model_dir
         
         # 调用父类构造函数
         super().__init__(dataset_name="mbpp", model_name=self.model_name)
@@ -598,7 +600,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         
         # 微调管理器（如果需要）
         if model_type == "finetune":
-            self.finetuning_manager = MBTPFineTuningManager(self.adapter, use_lora=True)
+            self.finetuning_manager = MBTPFineTuningManager(self.adapter, use_lora=True, output_dir=self.output_model_dir)
         else:
             self.finetuning_manager = None
         
@@ -905,6 +907,8 @@ def main():
                        help='P2Value权重α')
     
     # 其他参数
+    parser.add_argument('--output-model-dir', type=str, default='./mbpp_btp_checkpoints',
+                       help='模型保存目录')
     parser.add_argument('--seed', type=int, default=42,
                        help='随机种子')
     parser.add_argument('--debug', action='store_true',
@@ -942,7 +946,8 @@ def main():
         api_base=None,  # API base 参数在 ModelAdapter 中处理
         sampling_method=args.sampling_method,
         sampling_alpha=args.sampling_alpha,
-        p2value_alpha=args.p2value_alpha
+        p2value_alpha=args.p2value_alpha,
+        output_model_dir=args.output_model_dir
     )
     
     # 运行实验
