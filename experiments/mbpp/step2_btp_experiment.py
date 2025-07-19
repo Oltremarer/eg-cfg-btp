@@ -439,11 +439,7 @@ class MBTPFineTuningManager:
     """MBPP BTP微调管理器"""
     
     def __init__(self, model_adapter: ModelAdapter, use_lora: bool = True, 
-<<<<<<< HEAD
                  lora_config: Optional[Dict] = None, output_dir: str = "./mbpp_btp_checkpoints"):
-=======
-                 lora_config: Optional[Dict] = None, output_dir: str = './mbpp_btp_checkpoints'):
->>>>>>> origin/main
         self.model_adapter = model_adapter
         self.use_lora = use_lora
         self.output_dir = output_dir
@@ -476,21 +472,16 @@ class MBTPFineTuningManager:
     def finetune_on_experiences(self, experiences: List[Dict], 
                                training_args: Optional[TrainingArguments] = None) -> None:
         """基于经验进行微调"""
-        print("进入finetune_on_experiences，经验数量：", len(experiences))
         if self.model_adapter.model_type != "local":
             print("⚠️  微调仅支持本地模型")
             return
-        print("模型类型：", type(self.model_adapter.model))
+        
         # 准备训练数据
         train_dataset = self._prepare_training_dataset(experiences)
-        print("训练数据集准备完成，样本数：", len(train_dataset))
+        
         if training_args is None:
             training_args = TrainingArguments(
-<<<<<<< HEAD
                 output_dir=self.output_dir,  # 使用自定义输出目录
-=======
-                output_dir=self.output_dir,
->>>>>>> origin/main
                 num_train_epochs=1,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
@@ -498,14 +489,16 @@ class MBTPFineTuningManager:
                 learning_rate=1e-4,
                 fp16=True,
                 logging_steps=5,
-                save_steps=10,  # 从100改为10，更频繁地保存模型
+                save_steps=100,
                 remove_unused_columns=False,
             )
+        
         # 数据整理器
         data_collator = DataCollatorForLanguageModeling(
             tokenizer=self.model_adapter.tokenizer,
             mlm=False,
         )
+        
         # 训练器
         trainer = Trainer(
             model=self.model_adapter.model,
@@ -513,40 +506,11 @@ class MBTPFineTuningManager:
             train_dataset=train_dataset,
             data_collator=data_collator,
         )
-        print("准备调用trainer.train()...")
-        print(f"训练参数：output_dir={self.output_dir}, save_steps={training_args.save_steps}")
         
-<<<<<<< HEAD
         print(f"🚀 开始微调... 模型将保存到: {self.output_dir}")
-=======
-        # 训练
->>>>>>> origin/main
         trainer.train()
-        print("train()完成，准备调用save_model...")
-        
-        # 保存模型
         trainer.save_model()
-        print("save_model调用完成")
-        
-        # 强制保存完整模型（包括LoRA adapter）
-        import os
-        print(f"强制保存模型到：{os.path.abspath(self.output_dir)}")
-        
-        # 保存模型和分词器
-        if hasattr(self.model_adapter.model, 'save_pretrained'):
-            self.model_adapter.model.save_pretrained(self.output_dir)
-            print("模型保存完成")
-        
-        if hasattr(self.model_adapter.tokenizer, 'save_pretrained'):
-            self.model_adapter.tokenizer.save_pretrained(self.output_dir)
-            print("分词器保存完成")
-        
-        # 检查保存的文件
-        if os.path.exists(self.output_dir):
-            saved_files = os.listdir(self.output_dir)
-            print(f"保存的文件：{saved_files}")
-        else:
-            print("警告：输出目录不存在！")
+        print("✅ 微调完成")
     
     def _prepare_training_dataset(self, experiences: List[Dict]) -> Dataset:
         """准备训练数据集"""
@@ -586,11 +550,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     def __init__(self, model_name: str = None, model_type: str = "local", 
                  api_key: str = None, api_base: str = None,
                  sampling_method: str = "power", sampling_alpha: float = 1.0, 
-<<<<<<< HEAD
                  p2value_alpha: float = 0.5, output_dir: str = "./mbpp_btp_checkpoints"):
-=======
-                 p2value_alpha: float = 0.5, output_model_dir: str = './mbpp_btp_checkpoints'):
->>>>>>> origin/main
         
         # 设置基本模型信息
         self.model_name = model_name or "deepseek-ai/deepseek-coder-1.3b-instruct"
@@ -603,7 +563,6 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         self.sampling_method = sampling_method
         self.sampling_alpha = sampling_alpha
         self.p2value_alpha = p2value_alpha
-        self.output_model_dir = output_model_dir
         
         # 调用父类构造函数
         super().__init__(dataset_name="mbpp", model_name=self.model_name)
@@ -641,15 +600,11 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         
         # 微调管理器（如果需要）
         if model_type == "finetune":
-<<<<<<< HEAD
             self.finetuning_manager = MBTPFineTuningManager(
                 self.adapter, 
                 use_lora=True, 
                 output_dir=self.output_dir
             )
-=======
-            self.finetuning_manager = MBTPFineTuningManager(self.adapter, use_lora=True, output_dir=self.output_model_dir)
->>>>>>> origin/main
         else:
             self.finetuning_manager = None
         
@@ -965,8 +920,6 @@ def main():
                        help='P2Value权重α')
     
     # 其他参数
-    parser.add_argument('--output-model-dir', type=str, default='./mbpp_btp_checkpoints',
-                       help='模型保存目录')
     parser.add_argument('--seed', type=int, default=42,
                        help='随机种子')
     parser.add_argument('--debug', action='store_true',
@@ -1007,11 +960,7 @@ def main():
         sampling_method=args.sampling_method,
         sampling_alpha=args.sampling_alpha,
         p2value_alpha=args.p2value_alpha,
-<<<<<<< HEAD
         output_dir=args.output_dir # 传递output_dir参数
-=======
-        output_model_dir=args.output_model_dir
->>>>>>> origin/main
     )
     
     # 运行实验
