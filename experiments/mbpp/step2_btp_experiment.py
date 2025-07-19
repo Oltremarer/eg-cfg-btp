@@ -454,7 +454,7 @@ class MBTPFineTuningManager:
     
     def _setup_lora(self):
         """设置LoRA微调"""
-        if self.model_adapter.model_type != "local":
+        if self.model_adapter.model_type not in ["local", "finetune"]:
             print("⚠️  LoRA微调仅支持本地模型")
             return
         
@@ -472,7 +472,7 @@ class MBTPFineTuningManager:
     def finetune_on_experiences(self, experiences: List[Dict], 
                                training_args: Optional[TrainingArguments] = None) -> None:
         """基于经验进行微调"""
-        if self.model_adapter.model_type != "local":
+        if self.model_adapter.model_type not in ["local", "finetune"]:
             print("⚠️  微调仅支持本地模型")
             return
         
