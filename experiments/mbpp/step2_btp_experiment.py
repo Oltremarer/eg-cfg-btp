@@ -439,9 +439,10 @@ class MBTPFineTuningManager:
     """MBPP BTP微调管理器"""
     
     def __init__(self, model_adapter: ModelAdapter, use_lora: bool = True, 
-                 lora_config: Optional[Dict] = None):
+                 lora_config: Optional[Dict] = None, output_dir: str = "./mbpp_btp_checkpoints"):
         self.model_adapter = model_adapter
         self.use_lora = use_lora
+        self.output_dir = output_dir
         self.lora_config = lora_config or {
             'r': 16,
             'lora_alpha': 32,
@@ -480,7 +481,7 @@ class MBTPFineTuningManager:
         
         if training_args is None:
             training_args = TrainingArguments(
-                output_dir="./mbpp_btp_checkpoints",
+                output_dir=self.output_dir,  # 使用自定义输出目录
                 num_train_epochs=1,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
@@ -506,7 +507,7 @@ class MBTPFineTuningManager:
             data_collator=data_collator,
         )
         
-        print("🚀 开始微调...")
+        print(f"🚀 开始微调... 模型将保存到: {self.output_dir}")
         trainer.train()
         trainer.save_model()
         print("✅ 微调完成")
@@ -549,13 +550,14 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     def __init__(self, model_name: str = None, model_type: str = "local", 
                  api_key: str = None, api_base: str = None,
                  sampling_method: str = "power", sampling_alpha: float = 1.0, 
-                 p2value_alpha: float = 0.5):
+                 p2value_alpha: float = 0.5, output_dir: str = "./mbpp_btp_checkpoints"):
         
         # 设置基本模型信息
         self.model_name = model_name or "deepseek-ai/deepseek-coder-1.3b-instruct"
         self.model_type = model_type
         self.api_key = api_key
         self.api_base = api_base
+        self.output_dir = output_dir
         
         # BTP特定参数  
         self.sampling_method = sampling_method
@@ -598,7 +600,11 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         
         # 微调管理器（如果需要）
         if model_type == "finetune":
-            self.finetuning_manager = MBTPFineTuningManager(self.adapter, use_lora=True)
+            self.finetuning_manager = MBTPFineTuningManager(
+                self.adapter, 
+                use_lora=True, 
+                output_dir=self.output_dir
+            )
         else:
             self.finetuning_manager = None
         
@@ -606,6 +612,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         print(f"   模型: {self.model_name}")
         print(f"   家族: {self.model_info.family.value}")
         print(f"   类型: {self.model_info.type.value}")
+        print(f"   输出目录: {self.output_dir}")
         print(f"   优化参数: {self.optimal_params}")
     
     def load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
@@ -856,17 +863,23 @@ def main():
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
      --mode local --max-problems 50
 
-2. 本地模型微调:
+2. 本地模型微调（使用默认输出目录）:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
      --mode finetune --max-problems 100
 
-3. OpenAI实验:
+3. 本地模型微调（自定义输出目录）:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100 \\
+     --output-dir ./my_custom_checkpoints
+
+4. OpenAI实验:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model gpt-4 --mode openai \\
      --api-key YOUR_KEY --max-problems 30
 
-4. DeepSeek API实验:
+5. DeepSeek API实验:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-chat --mode deepseek \\
      --api-key YOUR_KEY --max-problems 30
@@ -894,6 +907,8 @@ def main():
                        help='PPER训练迭代次数')
     parser.add_argument('--batch-size', type=int, default=50,
                        help='训练批大小')
+    parser.add_argument('--output-dir', type=str, default='./mbpp_btp_checkpoints',
+                       help='模型保存目录（仅微调模式）')
     
     # BTP算法参数
     parser.add_argument('--sampling-method', type=str, default='power',
@@ -933,6 +948,8 @@ def main():
     print(f"  采样方法: {args.sampling_method}")
     print(f"  采样Alpha: {args.sampling_alpha}")
     print(f"  P2Value Alpha: {args.p2value_alpha}")
+    if args.mode == "finetune":
+        print(f"  输出目录: {args.output_dir}")
     
     # 创建实验实例
     experiment = MBBPBTPExperiment(
@@ -942,7 +959,8 @@ def main():
         api_base=None,  # API base 参数在 ModelAdapter 中处理
         sampling_method=args.sampling_method,
         sampling_alpha=args.sampling_alpha,
-        p2value_alpha=args.p2value_alpha
+        p2value_alpha=args.p2value_alpha,
+        output_dir=args.output_dir # 传递output_dir参数
     )
     
     # 运行实验
