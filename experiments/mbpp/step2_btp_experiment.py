@@ -486,7 +486,7 @@ class MBTPFineTuningManager:
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
                 warmup_steps=10,
-                learning_rate=1e-4,
+                learning_rate=1e-6,  # 大幅减少学习率，从1e-4改为1e-6
                 fp16=True,
                 logging_steps=5,
                 save_steps=100,
