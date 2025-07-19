@@ -506,10 +506,35 @@ class MBTPFineTuningManager:
             data_collator=data_collator,
         )
         print("准备调用trainer.train()...")
+        print(f"训练参数：output_dir={self.output_dir}, save_steps={training_args.save_steps}")
+        
+        # 训练
         trainer.train()
         print("train()完成，准备调用save_model...")
+        
+        # 保存模型
         trainer.save_model()
         print("save_model调用完成")
+        
+        # 强制保存完整模型（包括LoRA adapter）
+        import os
+        print(f"强制保存模型到：{os.path.abspath(self.output_dir)}")
+        
+        # 保存模型和分词器
+        if hasattr(self.model_adapter.model, 'save_pretrained'):
+            self.model_adapter.model.save_pretrained(self.output_dir)
+            print("模型保存完成")
+        
+        if hasattr(self.model_adapter.tokenizer, 'save_pretrained'):
+            self.model_adapter.tokenizer.save_pretrained(self.output_dir)
+            print("分词器保存完成")
+        
+        # 检查保存的文件
+        if os.path.exists(self.output_dir):
+            saved_files = os.listdir(self.output_dir)
+            print(f"保存的文件：{saved_files}")
+        else:
+            print("警告：输出目录不存在！")
     
     def _prepare_training_dataset(self, experiences: List[Dict]) -> Dataset:
         """准备训练数据集"""
