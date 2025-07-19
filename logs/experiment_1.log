@@ -1,0 +1,48 @@
+nohup: ignoring input
+2025-07-01 20:27:58,185 - INFO - Device 0 seems unavailable, Proceeding to check subsequent devices.
+2025-07-01 20:27:58,481 - INFO - We will use 90% of the memory on device 1 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+BTP Fine-tuning Experiment Configuration:
+  Source Model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+  Target Model: deepseek-ai/deepseek-coder-1.3b-instruct
+  Dataset: mbpp
+  Max Problems: 5
+  Sampling Method: power
+  Sampling Alpha: 1.0
+  P2Value Alpha: 0.5
+  Use LoRA: True
+  LoRA Config: r=16, alpha=32, dropout=0.1
+Loading source model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:15<00:45, 15.31s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:31<00:31, 15.90s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:47<00:15, 15.72s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:57<00:00, 13.46s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:57<00:00, 14.28s/it]
+2025-07-01 20:28:58,724 - WARNING - Some parameters are on the meta device because they were offloaded to the cpu.
+2025-07-01 20:29:00,238 - INFO - Device 0 seems unavailable, Proceeding to check subsequent devices.
+2025-07-01 20:29:00,240 - INFO - We will use 90% of the memory on device 1 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Loading target model: deepseek-ai/deepseek-coder-1.3b-instruct
+Loading dataset: mbpp
+Loaded 500 problems
+============================================================
+BTP Fine-tuning Experiment
+============================================================
+Phase 1: Beam Search Sampling
+Beam Search Sampling:   0%|          | 0/5 [00:00<?, ?it/s]The following generation flags are not valid and may be ignored: ['temperature', 'top_p']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+The `seen_tokens` attribute is deprecated and will be removed in v4.41. Use the `cache_position` model input instead.
+Beam Search Sampling:   0%|          | 0/5 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 942, in <module>
+    main() 
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 927, in main
+    results = experiment.run_experiment(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 722, in run_experiment
+    self.phase1_beam_search_sampling(problems_list, num_beams)
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 564, in phase1_beam_search_sampling
+    candidates = self.model_manager.generate_beam_candidates(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 476, in generate_beam_candidates
+    outputs = self.source_model.generate(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/generation/utils.py", line 2642, in generate
+    result = self._beam_search(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/generation/utils.py", line 4071, in _beam_search
+    model_inputs = self.prepare_inputs_for_generation(flat_running_sequences, **model_kwargs)
+  File "/home/ryan/.cache/huggingface/modules/transformers_modules/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct/e434a23f91ba5b4923cf6c9d9a238eb4a08e3a11/modeling_deepseek.py", line 1728, in prepare_inputs_for_generation
+    max_cache_length = past_key_values.get_max_length()
+AttributeError: 'DynamicCache' object has no attribute 'get_max_length'

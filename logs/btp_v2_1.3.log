@@ -1,0 +1,70 @@
+nohup: ignoring input
+/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/huggingface_hub/file_download.py:943: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+BTP Fine-tuning Experiment Configuration:
+  Source Model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+  Target Model: deepseek-ai/deepseek-coder-1.3b-instruct
+  Dataset: mbpp
+  Max Problems: 50
+  Sampling Method: power
+  Sampling Alpha: 1.0
+  P2Value Alpha: 0.5
+  Use LoRA: True
+  LoRA Config: r=16, alpha=32, dropout=0.1
+Running on: cuda
+Loading source model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+Loading model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+Accelerate available: True
+Error loading model with device_map: No module named 'transformers.cache_utils'
+Trying simple loading method...
+Traceback (most recent call last):
+  File "/home/ryan/eg-cfg-btp/experiments/../eg_cfg/model_utils.py", line 44, in load_model
+    model = AutoModelForCausalLM.from_pretrained(
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/transformers/models/auto/auto_factory.py", line 553, in from_pretrained
+    model_class = get_class_from_dynamic_module(
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/transformers/dynamic_module_utils.py", line 499, in get_class_from_dynamic_module
+    return get_class_in_module(class_name, final_module.replace(".py", ""))
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/transformers/dynamic_module_utils.py", line 199, in get_class_in_module
+    module = importlib.import_module(module_path)
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/home/ryan/.cache/huggingface/modules/transformers_modules/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct/e434a23f91ba5b4923cf6c9d9a238eb4a08e3a11/modeling_deepseek.py", line 32, in <module>
+    from transformers.cache_utils import Cache, DynamicCache
+ModuleNotFoundError: No module named 'transformers.cache_utils'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 977, in <module>
+    sys.exit(main()) 
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 912, in main
+    experiment = BTPFineTuneExperiment(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 521, in __init__
+    self.model_manager = BTPModelManager(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 434, in __init__
+    self.source_model, self.tokenizer = load_model(self.source_model_path, self.device)
+  File "/home/ryan/eg-cfg-btp/experiments/../eg_cfg/model_utils.py", line 58, in load_model
+    model = AutoModelForCausalLM.from_pretrained(
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/transformers/models/auto/auto_factory.py", line 553, in from_pretrained
+    model_class = get_class_from_dynamic_module(
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/transformers/dynamic_module_utils.py", line 499, in get_class_from_dynamic_module
+    return get_class_in_module(class_name, final_module.replace(".py", ""))
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/site-packages/transformers/dynamic_module_utils.py", line 199, in get_class_in_module
+    module = importlib.import_module(module_path)
+  File "/home/ryan/miniforge3/envs/eg-cfg-env/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 986, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 680, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 850, in exec_module
+  File "<frozen importlib._bootstrap>", line 228, in _call_with_frames_removed
+  File "/home/ryan/.cache/huggingface/modules/transformers_modules/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct/e434a23f91ba5b4923cf6c9d9a238eb4a08e3a11/modeling_deepseek.py", line 32, in <module>
+    from transformers.cache_utils import Cache, DynamicCache
+ModuleNotFoundError: No module named 'transformers.cache_utils'

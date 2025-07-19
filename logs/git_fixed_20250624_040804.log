@@ -1,0 +1,162 @@
+2025-06-24 04:08:08,253 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2025-06-24 04:08:08,529 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+2025-06-24 04:08:09,052 - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+2025-06-24 04:08:10,170 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/generation_config.json HTTP/1.1" 200 0
+2025-06-24 04:08:10,411 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2025-06-24 04:08:11,105 - DEBUG - https://huggingface.co:443 "HEAD /datasets/google-research-datasets/mbpp/resolve/main/README.md HTTP/1.1" 200 0
+2025-06-24 04:08:11,340 - DEBUG - https://huggingface.co:443 "HEAD /datasets/google-research-datasets/mbpp/resolve/4bb6404fdc6cacfda99d4ac4205087b89d32030c/mbpp.py HTTP/1.1" 404 0
+2025-06-24 04:08:11,342 - DEBUG - Starting new HTTPS connection (1): s3.amazonaws.com:443
+2025-06-24 04:08:12,048 - DEBUG - https://s3.amazonaws.com:443 "HEAD /datasets.huggingface.co/datasets/datasets/google-research-datasets/mbpp/google-research-datasets/mbpp.py HTTP/1.1" 404 0
+2025-06-24 04:08:12,314 - DEBUG - https://huggingface.co:443 "GET /api/datasets/google-research-datasets/mbpp/revision/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 3937
+2025-06-24 04:08:12,558 - DEBUG - https://huggingface.co:443 "HEAD /datasets/google-research-datasets/mbpp/resolve/4bb6404fdc6cacfda99d4ac4205087b89d32030c/.huggingface.yaml HTTP/1.1" 404 0
+2025-06-24 04:08:12,564 - DEBUG - Starting new HTTPS connection (1): datasets-server.huggingface.co:443
+2025-06-24 04:08:12,933 - DEBUG - https://datasets-server.huggingface.co:443 "GET /info?dataset=google-research-datasets/mbpp HTTP/1.1" 200 None
+2025-06-24 04:08:13,195 - DEBUG - https://huggingface.co:443 "GET /api/datasets/google-research-datasets/mbpp/revision/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 3937
+2025-06-24 04:08:13,442 - DEBUG - https://huggingface.co:443 "GET /api/datasets/google-research-datasets/mbpp/tree/4bb6404fdc6cacfda99d4ac4205087b89d32030c?recursive=False&expand=False HTTP/1.1" 200 389
+2025-06-24 04:08:13,685 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:13,938 - DEBUG - https://huggingface.co:443 "GET /api/datasets/google-research-datasets/mbpp/tree/4bb6404fdc6cacfda99d4ac4205087b89d32030c/full?recursive=False&expand=False HTTP/1.1" 200 938
+2025-06-24 04:08:13,946 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2025-06-24 04:08:14,221 - DEBUG - https://huggingface.co:443 "GET /api/datasets/google-research-datasets/mbpp/revision/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 3937
+2025-06-24 04:08:14,462 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:14,710 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:14,958 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:15,204 - DEBUG - https://huggingface.co:443 "HEAD /datasets/google-research-datasets/mbpp/resolve/4bb6404fdc6cacfda99d4ac4205087b89d32030c/dataset_infos.json HTTP/1.1" 404 0
+2025-06-24 04:08:15,442 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:15,688 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:15,935 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:16,185 - DEBUG - https://huggingface.co:443 "POST /api/datasets/google-research-datasets/mbpp/paths-info/4bb6404fdc6cacfda99d4ac4205087b89d32030c HTTP/1.1" 200 235
+2025-06-24 04:08:16,190 - DEBUG - Attempting to acquire lock 140365890459296 on /home/ryan/.cache/huggingface/datasets/_home_ryan_.cache_huggingface_datasets_google-research-datasets___mbpp_full_0.0.0_4bb6404fdc6cacfda99d4ac4205087b89d32030c.lock
+2025-06-24 04:08:16,191 - DEBUG - Lock 140365890459296 acquired on /home/ryan/.cache/huggingface/datasets/_home_ryan_.cache_huggingface_datasets_google-research-datasets___mbpp_full_0.0.0_4bb6404fdc6cacfda99d4ac4205087b89d32030c.lock
+2025-06-24 04:08:16,191 - DEBUG - open file: /home/ryan/.cache/huggingface/datasets/google-research-datasets___mbpp/full/0.0.0/4bb6404fdc6cacfda99d4ac4205087b89d32030c/dataset_info.json
+2025-06-24 04:08:16,192 - DEBUG - Attempting to release lock 140365890459296 on /home/ryan/.cache/huggingface/datasets/_home_ryan_.cache_huggingface_datasets_google-research-datasets___mbpp_full_0.0.0_4bb6404fdc6cacfda99d4ac4205087b89d32030c.lock
+2025-06-24 04:08:16,192 - DEBUG - Lock 140365890459296 released on /home/ryan/.cache/huggingface/datasets/_home_ryan_.cache_huggingface_datasets_google-research-datasets___mbpp_full_0.0.0_4bb6404fdc6cacfda99d4ac4205087b89d32030c.lock
+2025-06-24 04:08:16,237 - DEBUG - Attempting to acquire lock 140365890460448 on /home/ryan/.cache/huggingface/datasets/google-research-datasets___mbpp/full/0.0.0/4bb6404fdc6cacfda99d4ac4205087b89d32030c_builder.lock
+2025-06-24 04:08:16,237 - DEBUG - Lock 140365890460448 acquired on /home/ryan/.cache/huggingface/datasets/google-research-datasets___mbpp/full/0.0.0/4bb6404fdc6cacfda99d4ac4205087b89d32030c_builder.lock
+2025-06-24 04:08:16,238 - DEBUG - open file: /home/ryan/.cache/huggingface/datasets/google-research-datasets___mbpp/full/0.0.0/4bb6404fdc6cacfda99d4ac4205087b89d32030c/dataset_info.json
+2025-06-24 04:08:16,238 - DEBUG - Attempting to release lock 140365890460448 on /home/ryan/.cache/huggingface/datasets/google-research-datasets___mbpp/full/0.0.0/4bb6404fdc6cacfda99d4ac4205087b89d32030c_builder.lock
+2025-06-24 04:08:16,238 - DEBUG - Lock 140365890460448 released on /home/ryan/.cache/huggingface/datasets/google-research-datasets___mbpp/full/0.0.0/4bb6404fdc6cacfda99d4ac4205087b89d32030c_builder.lock
+BTP Fine-tuning Experiment Configuration:
+  Source Model: deepseek-ai/deepseek-coder-1.3b-instruct
+  Target Model: same as source
+  Dataset: mbpp
+  Max Problems: 3
+  Sampling Method: power
+  Sampling Alpha: 1.0
+  P2Value Alpha: 0.5
+  Use LoRA: True
+  LoRA Config: r=64, alpha=128, dropout=0.1
+Loading source model: deepseek-ai/deepseek-coder-1.3b-instruct
+Loading dataset: mbpp
+Loaded 500 problems
+============================================================
+BTP Fine-tuning Experiment
+============================================================
+Phase 1: Beam Search Sampling
+Beam Search Sampling:   0%|          | 0/3 [00:00<?, ?it/s]huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+Beam Search Sampling:  33%|███▎      | 1/3 [00:06<00:12,  6.33s/it]huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+Beam Search Sampling:  67%|██████▋   | 2/3 [00:11<00:05,  5.70s/it]huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+Beam Search Sampling: 100%|██████████| 3/3 [00:14<00:00,  4.58s/it]Beam Search Sampling: 100%|██████████| 3/3 [00:14<00:00,  4.94s/it]
+
+Initial experience buffer stats:
+  total_experiences: 6
+  avg_p2value: 0.49966559310653835
+  std_p2value: 0.00014702218218470197
+  avg_pass_rate: 0.0
+  fully_passed_count: 0
+Phase 2: PPER Training (1 iterations)
+
+Iteration 1/1
+Sampled 3 experiences for training
+Map:   0%|          | 0/3 [00:00<?, ? examples/s]Map: 100%|██████████| 3/3 [00:00<00:00, 373.78 examples/s]
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+No label_names provided for model class `PeftModelForCausalLM`. Since `PeftModel` hides base models input arguments, if label_names is not given, label_names can't be set automatically within `Trainer`. Note that empty label_names list will be used instead.
+Starting fine-tuning iteration 0...
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00,  3.89it/s]2025-06-24 04:08:39,000 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+2025-06-24 04:08:39,234 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+                                             100%|██████████| 1/1 [00:01<00:00,  3.89it/s]100%|██████████| 1/1 [00:01<00:00,  1.52s/it]
+2025-06-24 04:08:39,838 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+2025-06-24 04:08:40,078 - DEBUG - https://huggingface.co:443 "HEAD /deepseek-ai/deepseek-coder-1.3b-instruct/resolve/main/config.json HTTP/1.1" 200 0
+{'train_runtime': 1.52, 'train_samples_per_second': 1.974, 'train_steps_per_second': 0.658, 'train_loss': 1.110986590385437, 'epoch': 1.0}
+Model saved to ./btp_checkpoints/iteration_0
+
+Experiment results saved to: ./results/git_fixed/btp_finetune_results_20250624_040840.json
+
+Experiment completed!
+Final stats:
+  total_experiences: 6
+  avg_p2value: 0.49966559310653835
+  std_p2value: 0.00014702218218470197
+  avg_pass_rate: 0.0
+  fully_passed_count: 0

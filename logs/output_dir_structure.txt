@@ -1,0 +1,4 @@
+total 1000
+drwxrwxr-x  2 ryan ryan    4096 Jul 19 07:35 .
+drwxrwxr-x 19 ryan ryan    4096 Jul 19 07:37 ..
+-rw-rw-r--  1 ryan ryan 1010794 Jul 18 02:33 nohup.out

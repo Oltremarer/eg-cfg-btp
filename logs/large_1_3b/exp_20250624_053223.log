@@ -1,0 +1,5 @@
+nohup: ignoring input
+=== DeepSeek-1.3B 大规模实验开始: Tue Jun 24 05:32:23 AM UTC 2025 ===
+使用DeepSeek-1.3B进行大规模实验 (已验证稳定)...
+2025-06-24 05:32:38,368 - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+Terminated

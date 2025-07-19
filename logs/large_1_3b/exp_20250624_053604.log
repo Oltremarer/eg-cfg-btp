@@ -1,0 +1,116 @@
+nohup: ignoring input
+=== DeepSeek-1.3B 大规模实验开始: Tue Jun 24 05:36:04 AM UTC 2025 ===
+使用DeepSeek-1.3B进行大规模实验 (已验证稳定)...
+2025-06-24 05:36:19,316 - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+BTP Fine-tuning Experiment Configuration:
+  Source Model: deepseek-ai/deepseek-coder-1.3b-instruct
+  Target Model: same as source
+  Dataset: mbpp
+  Max Problems: 100
+  Sampling Method: power
+  Sampling Alpha: 1.2
+  P2Value Alpha: 0.3
+  Use LoRA: True
+  LoRA Config: r=32, alpha=64, dropout=0.1
+Loading source model: deepseek-ai/deepseek-coder-1.3b-instruct
+Loading dataset: mbpp
+Loaded 500 problems
+============================================================
+BTP Fine-tuning Experiment
+============================================================
+Phase 1: Beam Search Sampling
+Beam Search Sampling:   0%|          | 0/100 [00:00<?, ?it/s]Beam Search Sampling:   1%|          | 1/100 [00:05<09:31,  5.77s/it]Beam Search Sampling:   2%|▏         | 2/100 [00:10<08:51,  5.42s/it]Beam Search Sampling:   3%|▎         | 3/100 [00:19<11:02,  6.83s/it]Beam Search Sampling:   4%|▍         | 4/100 [00:26<10:57,  6.85s/it]Beam Search Sampling:   5%|▌         | 5/100 [00:32<10:39,  6.73s/it]Beam Search Sampling:   6%|▌         | 6/100 [00:38<10:13,  6.52s/it]Beam Search Sampling:   7%|▋         | 7/100 [00:41<08:00,  5.17s/it]Beam Search Sampling:   8%|▊         | 8/100 [00:45<07:39,  5.00s/it]Beam Search Sampling:   9%|▉         | 9/100 [00:49<07:06,  4.68s/it]Beam Search Sampling:  10%|█         | 10/100 [00:56<07:49,  5.22s/it]Beam Search Sampling:  11%|█         | 11/100 [01:01<07:48,  5.26s/it]Beam Search Sampling:  12%|█▏        | 12/100 [01:06<07:25,  5.06s/it]Beam Search Sampling:  13%|█▎        | 13/100 [01:11<07:15,  5.01s/it]Beam Search Sampling:  14%|█▍        | 14/100 [01:16<07:11,  5.02s/it]Beam Search Sampling:  15%|█▌        | 15/100 [01:23<08:04,  5.69s/it]Beam Search Sampling:  16%|█▌        | 16/100 [01:27<07:19,  5.24s/it]Beam Search Sampling:  17%|█▋        | 17/100 [01:33<07:31,  5.44s/it]Beam Search Sampling:  18%|█▊        | 18/100 [01:42<08:57,  6.55s/it]Beam Search Sampling:  19%|█▉        | 19/100 [01:50<09:19,  6.91s/it]Beam Search Sampling:  20%|██        | 20/100 [01:57<09:07,  6.85s/it]Beam Search Sampling:  21%|██        | 21/100 [02:06<10:09,  7.72s/it]Beam Search Sampling:  22%|██▏       | 22/100 [02:13<09:44,  7.49s/it]Beam Search Sampling:  23%|██▎       | 23/100 [02:20<09:19,  7.27s/it]Beam Search Sampling:  24%|██▍       | 24/100 [02:24<07:49,  6.18s/it]Beam Search Sampling:  25%|██▌       | 25/100 [02:31<07:58,  6.38s/it]Beam Search Sampling:  26%|██▌       | 26/100 [02:42<09:42,  7.87s/it]Beam Search Sampling:  27%|██▋       | 27/100 [02:49<09:21,  7.69s/it]Beam Search Sampling:  28%|██▊       | 28/100 [02:56<08:46,  7.31s/it]Beam Search Sampling:  29%|██▉       | 29/100 [03:05<09:23,  7.94s/it]Beam Search Sampling:  30%|███       | 30/100 [03:11<08:41,  7.45s/it]Beam Search Sampling:  31%|███       | 31/100 [03:18<08:12,  7.14s/it]Beam Search Sampling:  32%|███▏      | 32/100 [03:24<07:45,  6.84s/it]Beam Search Sampling:  33%|███▎      | 33/100 [03:31<07:36,  6.81s/it]Beam Search Sampling:  34%|███▍      | 34/100 [03:35<06:31,  5.93s/it]Beam Search Sampling:  35%|███▌      | 35/100 [03:39<05:54,  5.45s/it]Beam Search Sampling:  36%|███▌      | 36/100 [03:44<05:37,  5.27s/it]Beam Search Sampling:  37%|███▋      | 37/100 [03:52<06:26,  6.14s/it]Beam Search Sampling:  38%|███▊      | 38/100 [04:00<06:53,  6.66s/it]Beam Search Sampling:  39%|███▉      | 39/100 [04:03<05:48,  5.72s/it]Beam Search Sampling:  40%|████      | 40/100 [04:09<05:47,  5.78s/it]Beam Search Sampling:  41%|████      | 41/100 [04:21<07:17,  7.42s/it]Beam Search Sampling:  42%|████▏     | 42/100 [04:24<06:01,  6.24s/it]Beam Search Sampling:  43%|████▎     | 43/100 [04:29<05:39,  5.96s/it]Beam Search Sampling:  44%|████▍     | 44/100 [04:35<05:22,  5.76s/it]Beam Search Sampling:  45%|████▌     | 45/100 [04:38<04:38,  5.07s/it]Beam Search Sampling:  46%|████▌     | 46/100 [04:43<04:35,  5.11s/it]Beam Search Sampling:  47%|████▋     | 47/100 [04:50<04:59,  5.65s/it]Beam Search Sampling:  48%|████▊     | 48/100 [04:54<04:17,  4.96s/it]Beam Search Sampling:  49%|████▉     | 49/100 [04:58<04:02,  4.76s/it]Beam Search Sampling:  50%|█████     | 50/100 [05:07<05:00,  6.02s/it]Beam Search Sampling:  51%|█████     | 51/100 [05:13<05:02,  6.17s/it]Beam Search Sampling:  52%|█████▏    | 52/100 [05:18<04:28,  5.60s/it]Beam Search Sampling:  53%|█████▎    | 53/100 [05:23<04:27,  5.69s/it]Beam Search Sampling:  54%|█████▍    | 54/100 [05:30<04:30,  5.88s/it]Beam Search Sampling:  55%|█████▌    | 55/100 [05:37<04:47,  6.39s/it]Beam Search Sampling:  56%|█████▌    | 56/100 [05:41<04:00,  5.48s/it]Beam Search Sampling:  57%|█████▋    | 57/100 [05:50<04:44,  6.62s/it]Beam Search Sampling:  58%|█████▊    | 58/100 [05:54<04:10,  5.96s/it]Beam Search Sampling:  59%|█████▉    | 59/100 [05:59<03:52,  5.67s/it]Beam Search Sampling:  60%|██████    | 60/100 [06:04<03:31,  5.29s/it]Beam Search Sampling:  61%|██████    | 61/100 [06:15<04:39,  7.15s/it]Beam Search Sampling:  62%|██████▏   | 62/100 [06:22<04:29,  7.08s/it]Beam Search Sampling:  63%|██████▎   | 63/100 [06:29<04:19,  7.02s/it]Beam Search Sampling:  64%|██████▍   | 64/100 [06:34<03:51,  6.42s/it]Beam Search Sampling:  65%|██████▌   | 65/100 [06:39<03:28,  5.97s/it]Beam Search Sampling:  66%|██████▌   | 66/100 [06:45<03:24,  6.00s/it]Beam Search Sampling:  67%|██████▋   | 67/100 [06:52<03:23,  6.16s/it]Beam Search Sampling:  68%|██████▊   | 68/100 [06:58<03:21,  6.29s/it]Beam Search Sampling:  69%|██████▉   | 69/100 [07:02<02:53,  5.59s/it]Beam Search Sampling:  70%|███████   | 70/100 [07:13<03:38,  7.29s/it]Beam Search Sampling:  71%|███████   | 71/100 [07:23<03:52,  8.02s/it]Beam Search Sampling:  72%|███████▏  | 72/100 [07:27<03:12,  6.87s/it]Beam Search Sampling:  73%|███████▎  | 73/100 [07:33<02:51,  6.36s/it]Beam Search Sampling:  74%|███████▍  | 74/100 [07:44<03:23,  7.81s/it]Beam Search Sampling:  75%|███████▌  | 75/100 [07:49<02:58,  7.15s/it]Beam Search Sampling:  76%|███████▌  | 76/100 [07:55<02:40,  6.68s/it]Beam Search Sampling:  77%|███████▋  | 77/100 [08:00<02:22,  6.19s/it]Beam Search Sampling:  78%|███████▊  | 78/100 [08:08<02:27,  6.71s/it]Beam Search Sampling:  79%|███████▉  | 79/100 [08:15<02:20,  6.70s/it]Beam Search Sampling:  80%|████████  | 80/100 [08:19<01:57,  5.88s/it]Beam Search Sampling:  81%|████████  | 81/100 [08:22<01:36,  5.09s/it]Beam Search Sampling:  82%|████████▏ | 82/100 [08:28<01:40,  5.56s/it]Beam Search Sampling:  83%|████████▎ | 83/100 [08:31<01:20,  4.76s/it]Beam Search Sampling:  84%|████████▍ | 84/100 [08:39<01:28,  5.53s/it]Beam Search Sampling:  85%|████████▌ | 85/100 [08:43<01:18,  5.25s/it]Beam Search Sampling:  86%|████████▌ | 86/100 [08:47<01:07,  4.85s/it]Beam Search Sampling:  87%|████████▋ | 87/100 [08:58<01:24,  6.52s/it]Beam Search Sampling:  88%|████████▊ | 88/100 [09:02<01:11,  5.93s/it]Beam Search Sampling:  89%|████████▉ | 89/100 [09:07<01:01,  5.57s/it]Beam Search Sampling:  90%|█████████ | 90/100 [09:12<00:55,  5.50s/it]Beam Search Sampling:  91%|█████████ | 91/100 [09:18<00:49,  5.55s/it]Beam Search Sampling:  92%|█████████▏| 92/100 [09:23<00:43,  5.49s/it]Beam Search Sampling:  93%|█████████▎| 93/100 [09:34<00:50,  7.21s/it]Beam Search Sampling:  94%|█████████▍| 94/100 [09:41<00:42,  7.03s/it]Beam Search Sampling:  95%|█████████▌| 95/100 [09:47<00:33,  6.60s/it]Beam Search Sampling:  96%|█████████▌| 96/100 [09:52<00:25,  6.37s/it]Beam Search Sampling:  97%|█████████▋| 97/100 [09:58<00:18,  6.06s/it]Beam Search Sampling:  98%|█████████▊| 98/100 [10:10<00:15,  7.76s/it]Beam Search Sampling:  99%|█████████▉| 99/100 [10:15<00:07,  7.13s/it]Beam Search Sampling: 100%|██████████| 100/100 [10:23<00:00,  7.38s/it]Beam Search Sampling: 100%|██████████| 100/100 [10:23<00:00,  6.24s/it]
+
+Initial experience buffer stats:
+  total_experiences: 500
+  avg_p2value: 0.49976054472757875
+  std_p2value: 0.00012805849723367075
+  avg_pass_rate: 0.0
+  fully_passed_count: 0
+Phase 2: PPER Training (5 iterations)
+
+Iteration 1/5
+Sampled 80 experiences for training
+Map:   0%|          | 0/80 [00:00<?, ? examples/s]Map: 100%|██████████| 80/80 [00:00<00:00, 1305.29 examples/s]
+No label_names provided for model class `PeftModelForCausalLM`. Since `PeftModel` hides base models input arguments, if label_names is not given, label_names can't be set automatically within `Trainer`. Note that empty label_names list will be used instead.
+Starting fine-tuning iteration 0...
+  0%|          | 0/5 [00:00<?, ?it/s] 20%|██        | 1/5 [00:00<00:02,  1.68it/s] 40%|████      | 2/5 [00:00<00:01,  2.19it/s] 60%|██████    | 3/5 [00:01<00:00,  2.36it/s] 80%|████████  | 4/5 [00:01<00:00,  2.43it/s]100%|██████████| 5/5 [00:02<00:00,  2.48it/s]                                             100%|██████████| 5/5 [00:15<00:00,  2.48it/s]100%|██████████| 5/5 [00:15<00:00,  3.19s/it]
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: 844a6bdb-4788-4773-af78-25c3ee0ae752)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+Parameter 'function'=<function BTPFineTuneExperiment._prepare_training_dataset.<locals>.tokenize_function at 0x7faa526e2040> of the transform datasets.arrow_dataset.Dataset._map_single couldn't be hashed properly, a random hash was used instead. Make sure your transforms and parameters are serializable with pickle or dill for the dataset fingerprinting and caching to work. If you reuse this transform, the caching mechanism will consider it to be different from the previous calls and recompute everything. This warning is only showed once. Subsequent hashing failures won't be showed.
+2025-06-24 05:50:22,516 - WARNING - Parameter 'function'=<function BTPFineTuneExperiment._prepare_training_dataset.<locals>.tokenize_function at 0x7faa526e2040> of the transform datasets.arrow_dataset.Dataset._map_single couldn't be hashed properly, a random hash was used instead. Make sure your transforms and parameters are serializable with pickle or dill for the dataset fingerprinting and caching to work. If you reuse this transform, the caching mechanism will consider it to be different from the previous calls and recompute everything. This warning is only showed once. Subsequent hashing failures won't be showed.
+{'train_runtime': 15.9277, 'train_samples_per_second': 5.023, 'train_steps_per_second': 0.314, 'train_loss': 0.8916726112365723, 'epoch': 1.0}
+Model saved to ./btp_checkpoints/iteration_0
+
+Iteration 2/5
+Sampled 80 experiences for training
+Map:   0%|          | 0/80 [00:00<?, ? examples/s]Map: 100%|██████████| 80/80 [00:00<00:00, 597.57 examples/s]
+No label_names provided for model class `PeftModelForCausalLM`. Since `PeftModel` hides base models input arguments, if label_names is not given, label_names can't be set automatically within `Trainer`. Note that empty label_names list will be used instead.
+Starting fine-tuning iteration 1...
+  0%|          | 0/5 [00:00<?, ?it/s] 20%|██        | 1/5 [00:00<00:01,  2.46it/s] 40%|████      | 2/5 [00:00<00:01,  2.56it/s] 60%|██████    | 3/5 [00:01<00:00,  2.56it/s] 80%|████████  | 4/5 [00:01<00:00,  2.55it/s]100%|██████████| 5/5 [00:01<00:00,  2.55it/s]                                             100%|██████████| 5/5 [00:18<00:00,  2.55it/s]100%|██████████| 5/5 [00:18<00:00,  3.61s/it]
+{'train_runtime': 18.0535, 'train_samples_per_second': 4.431, 'train_steps_per_second': 0.277, 'train_loss': 0.8898059844970703, 'epoch': 1.0}
+Model saved to ./btp_checkpoints/iteration_1
+
+Iteration 3/5
+Sampled 80 experiences for training
+Map:   0%|          | 0/80 [00:00<?, ? examples/s]Map: 100%|██████████| 80/80 [00:00<00:00, 1332.39 examples/s]
+No label_names provided for model class `PeftModelForCausalLM`. Since `PeftModel` hides base models input arguments, if label_names is not given, label_names can't be set automatically within `Trainer`. Note that empty label_names list will be used instead.
+Starting fine-tuning iteration 2...
+  0%|          | 0/5 [00:00<?, ?it/s] 20%|██        | 1/5 [00:00<00:01,  2.47it/s] 40%|████      | 2/5 [00:00<00:01,  2.52it/s] 60%|██████    | 3/5 [00:01<00:00,  2.53it/s] 80%|████████  | 4/5 [00:01<00:00,  2.53it/s]100%|██████████| 5/5 [00:01<00:00,  2.53it/s]/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: 954536e8-3e3d-4ef8-956f-2c75c0ae923c)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+                                             100%|██████████| 5/5 [00:12<00:00,  2.53it/s]100%|██████████| 5/5 [00:12<00:00,  2.49s/it]
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: f77f519d-b3c8-4e28-8535-c761220dc65b)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+{'train_runtime': 12.4749, 'train_samples_per_second': 6.413, 'train_steps_per_second': 0.401, 'train_loss': 0.8873222351074219, 'epoch': 1.0}
+Model saved to ./btp_checkpoints/iteration_2
+
+Iteration 4/5
+Sampled 80 experiences for training
+Map:   0%|          | 0/80 [00:00<?, ? examples/s]Map: 100%|██████████| 80/80 [00:00<00:00, 1239.35 examples/s]
+No label_names provided for model class `PeftModelForCausalLM`. Since `PeftModel` hides base models input arguments, if label_names is not given, label_names can't be set automatically within `Trainer`. Note that empty label_names list will be used instead.
+Starting fine-tuning iteration 3...
+  0%|          | 0/5 [00:00<?, ?it/s] 20%|██        | 1/5 [00:00<00:01,  2.47it/s] 40%|████      | 2/5 [00:00<00:01,  2.56it/s] 60%|██████    | 3/5 [00:01<00:00,  2.55it/s] 80%|████████  | 4/5 [00:01<00:00,  2.55it/s]100%|██████████| 5/5 [00:01<00:00,  2.55it/s]/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: b67499a6-95a0-44bb-9e66-6d080a458aa2)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+                                             100%|██████████| 5/5 [00:12<00:00,  2.55it/s]100%|██████████| 5/5 [00:12<00:00,  2.47s/it]
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: 579f235f-aad1-4c94-90d5-84c6fe1b0eac)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+{'train_runtime': 12.3734, 'train_samples_per_second': 6.466, 'train_steps_per_second': 0.404, 'train_loss': 0.8838951110839843, 'epoch': 1.0}
+Model saved to ./btp_checkpoints/iteration_3
+
+Iteration 5/5
+Sampled 80 experiences for training
+Map:   0%|          | 0/80 [00:00<?, ? examples/s]Map: 100%|██████████| 80/80 [00:00<00:00, 619.79 examples/s]
+No label_names provided for model class `PeftModelForCausalLM`. Since `PeftModel` hides base models input arguments, if label_names is not given, label_names can't be set automatically within `Trainer`. Note that empty label_names list will be used instead.
+Starting fine-tuning iteration 4...
+  0%|          | 0/5 [00:00<?, ?it/s] 20%|██        | 1/5 [00:00<00:01,  2.41it/s] 40%|████      | 2/5 [00:00<00:01,  2.53it/s] 60%|██████    | 3/5 [00:01<00:00,  2.54it/s] 80%|████████  | 4/5 [00:01<00:00,  2.54it/s]100%|██████████| 5/5 [00:01<00:00,  2.54it/s]/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: a76e05a4-3f0d-4228-b322-f03d3a26cd7f)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+                                             100%|██████████| 5/5 [00:12<00:00,  2.54it/s]100%|██████████| 5/5 [00:12<00:00,  2.49s/it]
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/other.py:1110: UserWarning: Unable to fetch remote file due to the following error (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: d78bd8d7-33e7-4c48-8527-bc463cf6939b)') - silently ignoring the lookup for the file config.json in deepseek-ai/deepseek-coder-1.3b-instruct.
+  warnings.warn(
+/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/peft/utils/save_and_load.py:236: UserWarning: Could not find a config file in deepseek-ai/deepseek-coder-1.3b-instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+{'train_runtime': 12.4737, 'train_samples_per_second': 6.414, 'train_steps_per_second': 0.401, 'train_loss': 0.8809271812438965, 'epoch': 1.0}
+Model saved to ./btp_checkpoints/iteration_4
+
+Experiment results saved to: ./results/large_1_3b/btp_finetune_results_20250624_055226.json
+
+Experiment completed!
+Final stats:
+  total_experiences: 500
+  avg_p2value: 0.49976054472757875
+  std_p2value: 0.00012805849723367075
+  avg_pass_rate: 0.0
+  fully_passed_count: 0
+=== 实验完成: Tue Jun 24 05:52:28 AM UTC 2025 ===

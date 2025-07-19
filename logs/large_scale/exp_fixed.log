@@ -1,0 +1,126 @@
+nohup: ignoring input
+=== 大规模BTP实验开始: Tue Jun 24 04:32:14 AM UTC 2025 ===
+环境和目录设置完成
+GPU状态:
+0, 78 %, 3971 MiB
+1, 0 %, 4 MiB
+开始运行DeepSeek-V2-Lite 7B大规模实验...
+A new version of the following files was downloaded from https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct:
+- configuration_deepseek.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct:
+- modeling_deepseek.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+BTP Fine-tuning Experiment Configuration:
+  Source Model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+  Target Model: same as source
+  Dataset: mbpp
+  Max Problems: 60
+  Sampling Method: power
+  Sampling Alpha: 1.2
+  P2Value Alpha: 0.3
+  Use LoRA: True
+  LoRA Config: r=32, alpha=64, dropout=0.1
+Loading source model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+Downloading shards:   0%|          | 0/4 [00:00<?, ?it/s]Downloading shards:  25%|██▌       | 1/4 [25:14<1:15:44, 1514.85s/it]Downloading shards:  25%|██▌       | 1/4 [25:24<1:16:14, 1524.95s/it]
+Traceback (most recent call last):
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/connection.py", line 516, in getresponse
+    httplib_response = super().getresponse()
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/http/client.py", line 1377, in getresponse
+    response.begin()
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/http/client.py", line 320, in begin
+    version, status, reason = self._read_status()
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/http/client.py", line 281, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/socket.py", line 704, in readinto
+    return self._sock.recv_into(b)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/ssl.py", line 1275, in recv_into
+    return self.read(nbytes, buffer)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/ssl.py", line 1133, in read
+    return self._sslobj.read(len, buffer)
+socket.timeout: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/util/retry.py", line 474, in increment
+    raise reraise(type(error), error, _stacktrace)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/util/util.py", line 39, in reraise
+    raise value
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/connectionpool.py", line 536, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/urllib3/connectionpool.py", line 367, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 1531, in _get_metadata_or_catch_error
+    metadata = get_hf_file_metadata(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 1448, in get_hf_file_metadata
+    r = _request_wrapper(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 286, in _request_wrapper
+    response = _request_wrapper(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 309, in _request_wrapper
+    response = http_backoff(method=method, url=url, **params, retry_on_exceptions=(), retry_on_status_codes=(429,))
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/utils/_http.py", line 310, in http_backoff
+    response = session.request(method=method, url=url, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/requests/sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/utils/_http.py", line 96, in send
+    return super().send(request, *args, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/requests/adapters.py", line 713, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: (ReadTimeoutError("HTTPSConnectionPool(host='huggingface.co', port=443): Read timed out. (read timeout=10)"), '(Request ID: ef647240-d334-4f82-9432-92281710175f)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/utils/hub.py", line 342, in cached_file
+    resolved_file = hf_hub_download(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/utils/_validators.py", line 114, in _inner_fn
+    return fn(*args, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 1008, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 1115, in _hf_hub_download_to_cache_dir
+    _raise_on_head_call_error(head_call_error, force_download, local_files_only)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/huggingface_hub/file_download.py", line 1646, in _raise_on_head_call_error
+    raise LocalEntryNotFoundError(
+huggingface_hub.errors.LocalEntryNotFoundError: An error happened while trying to locate the file on the Hub and we cannot find the requested files in the local cache. Please check your connection and try again or make sure your Internet connection is on.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 644, in <module>
+    main() 
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 617, in main
+    experiment = BTPFineTuneExperiment(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 281, in __init__
+    self.model_manager = BTPModelManager(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 183, in __init__
+    self.source_model = AutoModelForCausalLM.from_pretrained(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/models/auto/auto_factory.py", line 559, in from_pretrained
+    return model_class.from_pretrained(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/modeling_utils.py", line 262, in _wrapper
+    return func(*args, **kwargs)
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/modeling_utils.py", line 4022, in from_pretrained
+    resolved_archive_file, sharded_metadata = get_checkpoint_shard_files(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/utils/hub.py", line 1037, in get_checkpoint_shard_files
+    cached_filename = cached_file(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/utils/hub.py", line 385, in cached_file
+    raise EnvironmentError(
+OSError: We couldn't connect to 'https://huggingface.co' to load this file, couldn't find it in the cached files and it looks like deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct is not the path to a directory containing a file named model-00002-of-000004.safetensors.
+Checkout your internet connection or see how to run the library in offline mode at 'https://huggingface.co/docs/transformers/installation#offline-mode'.

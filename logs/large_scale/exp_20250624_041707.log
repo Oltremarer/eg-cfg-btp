@@ -1,0 +1,39 @@
+nohup: ignoring input
+BTP Fine-tuning Experiment Configuration:
+  Source Model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+  Target Model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+  Dataset: mbpp
+  Max Problems: 80
+  Sampling Method: power
+  Sampling Alpha: 1.2
+  P2Value Alpha: 0.3
+  Use LoRA: True
+  LoRA Config: r=32, alpha=64, dropout=0.1
+Loading source model: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+The repository for deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct contains custom code which must be executed to correctly load the model. You can inspect the repository content at https://hf.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct.
+You can avoid this prompt in future by passing the argument `trust_remote_code=True`.
+
+Do you wish to run the custom code? [y/N] Traceback (most recent call last):
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/dynamic_module_utils.py", line 652, in resolve_trust_remote_code
+    answer = input(
+OSError: [Errno 9] Bad file descriptor
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 642, in <module>
+    main() 
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 615, in main
+    experiment = BTPFineTuneExperiment(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 279, in __init__
+    self.model_manager = BTPModelManager(
+  File "/home/ryan/eg-cfg-btp/experiments/step2_btp_finetune_experiment.py", line 183, in __init__
+    self.source_model = AutoModelForCausalLM.from_pretrained(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/models/auto/auto_factory.py", line 526, in from_pretrained
+    config, kwargs = AutoConfig.from_pretrained(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/models/auto/configuration_auto.py", line 1078, in from_pretrained
+    trust_remote_code = resolve_trust_remote_code(
+  File "/home/ryan/miniforge3/envs/eg/lib/python3.9/site-packages/transformers/dynamic_module_utils.py", line 665, in resolve_trust_remote_code
+    raise ValueError(
+ValueError: The repository for deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct contains custom code which must be executed to correctly load the model. You can inspect the repository content at https://hf.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct.
+Please pass the argument `trust_remote_code=True` to allow custom code to be run.

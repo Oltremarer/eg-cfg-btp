@@ -1,0 +1,24 @@
+nohup: ignoring input
+================================================================================
+🚀 本地BTP实验启动
+================================================================================
+📋 模型配置: medium_to_small - 6.7B -> 1.3B 推荐配置
+📊 实验规模: quick - 快速验证（20分钟）
+
+🔧 详细配置:
+  📊 源模型: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+  🎯 目标模型: deepseek-ai/deepseek-coder-1.3b-instruct
+  📋 问题数量: 20
+  🔍 Beam数量: 5
+  🔄 迭代次数: 2
+  📦 批次大小: 16
+  🎲 采样方法: power (α=1.5)
+  ⚖️ P2Value权重: 0.7
+  📁 输出目录: ./local_btp_results/medium_to_small_quick_20250625_034731
+================================================================================
+是否继续执行实验？(y/N): Traceback (most recent call last):
+  File "/home/ryan/eg-cfg-btp/experiments/run_local_btp_experiment.py", line 282, in <module>
+    main() 
+  File "/home/ryan/eg-cfg-btp/experiments/run_local_btp_experiment.py", line 216, in main
+    response = input("是否继续执行实验？(y/N): ")
+OSError: [Errno 9] Bad file descriptor
