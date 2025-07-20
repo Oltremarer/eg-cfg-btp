@@ -486,7 +486,7 @@ class MBTPFineTuningManager:
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
                 warmup_steps=10,
-                learning_rate=1e-4,
+                learning_rate=1e-6,  # 大幅减少学习率，从1e-4改为1e-6
                 fp16=True,
                 logging_steps=5,
                 save_steps=100,
@@ -564,6 +564,10 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         self.sampling_alpha = sampling_alpha
         self.p2value_alpha = p2value_alpha
         
+        # 采样数据持久化相关
+        self.sampling_cache_dir = os.path.join(output_dir, "sampling_cache")
+        os.makedirs(self.sampling_cache_dir, exist_ok=True)
+        
         # 调用父类构造函数
         super().__init__(dataset_name="mbpp", model_name=self.model_name)
         
@@ -613,7 +617,85 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         print(f"   家族: {self.model_info.family.value}")
         print(f"   类型: {self.model_info.type.value}")
         print(f"   输出目录: {self.output_dir}")
+        print(f"   采样缓存目录: {self.sampling_cache_dir}")
         print(f"   优化参数: {self.optimal_params}")
+    
+    def _get_sampling_cache_filename(self, max_problems: int, num_beams: int) -> str:
+        """生成采样缓存文件名"""
+        model_name_safe = self.model_name.replace("/", "_").replace("-", "_")
+        return f"sampling_cache_{model_name_safe}_max{max_problems}_beams{num_beams}.json"
+    
+    def _get_sampling_cache_path(self, max_problems: int, num_beams: int) -> str:
+        """获取采样缓存文件路径"""
+        filename = self._get_sampling_cache_filename(max_problems, num_beams)
+        return os.path.join(self.sampling_cache_dir, filename)
+    
+    def save_sampling_results(self, max_problems: int, num_beams: int):
+        """保存采样结果到缓存文件"""
+        cache_path = self._get_sampling_cache_path(max_problems, num_beams)
+        
+        # 获取所有经验数据
+        all_experiences = self.experience_buffer.get_all_experiences()
+        
+        # 准备保存的数据
+        cache_data = {
+            'model_name': self.model_name,
+            'max_problems': max_problems,
+            'num_beams': num_beams,
+            'sampling_method': self.sampling_method,
+            'sampling_alpha': self.sampling_alpha,
+            'p2value_alpha': self.p2value_alpha,
+            'total_experiences': len(all_experiences),
+            'experiences': all_experiences,
+            'timestamp': datetime.now().isoformat(),
+            'cache_version': '1.0'
+        }
+        
+        # 保存到文件
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(cache_data, f, indent=2, ensure_ascii=False)
+        
+        print(f"💾 采样结果已保存到: {cache_path}")
+        print(f"   共保存 {len(all_experiences)} 个经验样本")
+        
+        return cache_path
+    
+    def load_sampling_results(self, max_problems: int, num_beams: int) -> bool:
+        """从缓存文件加载采样结果"""
+        cache_path = self._get_sampling_cache_path(max_problems, num_beams)
+        
+        if not os.path.exists(cache_path):
+            print(f"⚠️  缓存文件不存在: {cache_path}")
+            return False
+        
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as f:
+                cache_data = json.load(f)
+            
+            # 验证缓存数据
+            if cache_data.get('model_name') != self.model_name:
+                print(f"⚠️  缓存模型不匹配: 缓存={cache_data.get('model_name')}, 当前={self.model_name}")
+                return False
+            
+            # 加载经验数据到缓冲区
+            experiences = cache_data.get('experiences', [])
+            for exp in experiences:
+                self.experience_buffer.add_experience(exp)
+            
+            print(f"📂 从缓存加载采样结果: {cache_path}")
+            print(f"   共加载 {len(experiences)} 个经验样本")
+            print(f"   缓存时间: {cache_data.get('timestamp', 'N/A')}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ 加载缓存失败: {e}")
+            return False
+    
+    def check_sampling_cache_exists(self, max_problems: int, num_beams: int) -> bool:
+        """检查采样缓存是否存在"""
+        cache_path = self._get_sampling_cache_path(max_problems, num_beams)
+        return os.path.exists(cache_path)
     
     def load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
         """加载MBPP配置"""
@@ -767,32 +849,71 @@ def heap_queue_largest(nums,n):
                 continue
     
     def phase2_pper_training(self, n_iterations: int, batch_size: int):
-        """阶段2: 优先经验回放训练"""
+        """阶段2: 优先经验回放训练，支持固定样本集"""
         print(f"🎯 阶段2: 优先经验回放训练 ({n_iterations} 轮迭代)")
         
         if self.finetuning_manager is None:
             print("⚠️  跳过微调阶段（当前模式不支持微调）")
             return
         
+        # 初始化用于训练的经验列表
+        training_experiences = None
+        
+        # 如果指定了固定样本路径，则执行"采样一次或加载"逻辑
+        if self.fixed_sample_path:
+            # 检查文件是否已存在
+            if os.path.exists(self.fixed_sample_path):
+                print(f"🔄 从固定样本文件加载经验: {self.fixed_sample_path}")
+                try:
+                    with open(self.fixed_sample_path, 'r', encoding='utf-8') as f:
+                        training_experiences = json.load(f)
+                    print(f"   成功加载 {len(training_experiences)} 个固定样本")
+                except Exception as e:
+                    print(f"❌ 加载固定样本失败: {e}")
+                    return
+            else:
+                # 文件不存在，则执行一次采样并保存
+                print("🔄 首次运行，执行一次性采样并保存固定样本...")
+                all_experiences = self.experience_buffer.get_all_experiences()
+                if not all_experiences:
+                    print("⚠️  经验池为空，无法进行采样和训练。")
+                    return
+                
+                training_experiences = self.sampler.sample(all_experiences, batch_size)
+                
+                print(f"💾 将 {len(training_experiences)} 个采样经验保存到: {self.fixed_sample_path}")
+                # 确保目录存在
+                os.makedirs(os.path.dirname(self.fixed_sample_path), exist_ok=True)
+                with open(self.fixed_sample_path, 'w', encoding='utf-8') as f:
+                    json.dump(training_experiences, f, indent=2, ensure_ascii=False)
+        
+        # --- 主训练循环 ---
         for iteration in range(n_iterations):
             print(f"\n📈 迭代 {iteration + 1}/{n_iterations}")
             
-            # 获取所有经验
-            all_experiences = self.experience_buffer.get_all_experiences()
-            if len(all_experiences) == 0:
-                print("⚠️  没有可用经验，跳过此轮迭代")
+            # 如果没有使用固定样本模式，则每次都重新采样（原始逻辑）
+            if not self.fixed_sample_path:
+                all_experiences = self.experience_buffer.get_all_experiences()
+                if not all_experiences:
+                    print("⚠️  没有可用经验，跳过此轮迭代")
+                    continue
+                training_experiences = self.sampler.sample(all_experiences, batch_size)
+            
+            # 检查是否有可用于训练的经验
+            if not training_experiences:
+                print("⚠️  没有可用于训练的经验，跳过此轮迭代。")
                 continue
             
-            # 优先采样
-            sampled_experiences = self.sampler.sample(all_experiences, batch_size)
-            print(f"📊 采样了 {len(sampled_experiences)} 个经验用于训练")
+            print(f"📊 使用 {len(training_experiences)} 个经验进行本轮训练")
             
             # 执行微调
             try:
-                self.finetuning_manager.finetune_on_experiences(sampled_experiences)
+                self.finetuning_manager.finetune_on_experiences(training_experiences)
                 print(f"✅ 迭代 {iteration + 1} 微调完成")
             except Exception as e:
                 print(f"❌ 迭代 {iteration + 1} 微调失败: {e}")
+                import traceback
+                traceback.print_exc()
                 continue
     
     def get_experiment_results(self) -> Dict[str, Any]:
@@ -850,6 +971,55 @@ def heap_queue_largest(nums,n):
         
         return results
 
+    def run_experiment(self, max_problems: int = 100, num_beams: int = 5,
+                      n_iterations: int = 3, batch_size: int = 100,
+                      use_cached_sampling: bool = True, force_resample: bool = False) -> Dict[str, Any]:
+        """运行BTP实验（支持采样缓存和固定样本）"""
+        problems_list = self.run_on_problem_subset(max_problems)
+        
+        print(f"开始运行BTP实验，共 {len(problems_list)} 个问题")
+        
+        # 检查是否可以使用缓存的采样结果
+        if use_cached_sampling and not force_resample:
+            if self.check_sampling_cache_exists(max_problems, num_beams):
+                print("🔍 发现现有采样缓存，尝试加载...")
+                if self.load_sampling_results(max_problems, num_beams):
+                    print("✅ 成功加载缓存的采样结果，跳过采样阶段")
+                    # 直接进入阶段2
+                    self.phase2_pper_training(n_iterations, batch_size)
+                    return self.get_experiment_results()
+                else:
+                    print("⚠️  缓存加载失败，将重新采样")
+        
+        # 阶段1: Beam Search采样
+        print("🔍 开始阶段1: Beam Search采样")
+        self.phase1_beam_search_sampling(problems_list, num_beams)
+        
+        # 保存采样结果（如果启用了缓存功能）
+        if use_cached_sampling:
+            self.save_sampling_results(max_problems, num_beams)
+        
+        # 处理固定样本功能（在local模式下也支持）
+        if self.fixed_sample_path and self.model_type == "local":
+            print("🔄 本地模式：处理固定样本功能...")
+            all_experiences = self.experience_buffer.get_all_experiences()
+            if all_experiences:
+                # 执行一次采样并保存
+                sampled_experiences = self.sampler.sample(all_experiences, batch_size)
+                print(f"💾 将 {len(sampled_experiences)} 个采样经验保存到: {self.fixed_sample_path}")
+                # 确保目录存在
+                os.makedirs(os.path.dirname(self.fixed_sample_path), exist_ok=True)
+                with open(self.fixed_sample_path, 'w', encoding='utf-8') as f:
+                    json.dump(sampled_experiences, f, indent=2, ensure_ascii=False)
+                print("✅ 固定样本保存完成")
+            else:
+                print("⚠️  经验池为空，无法保存固定样本")
+        
+        # 阶段2: 优先经验回放训练
+        self.phase2_pper_training(n_iterations, batch_size)
+        
+        return self.get_experiment_results()
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -858,31 +1028,57 @@ def main():
         epilog="""
 使用示例:
 
-1. 本地模型BTP实验:
+=== 工作流A：自动化经验池缓存（推荐） ===
+
+1. 首次运行 - 生成缓存（使用finetune模式）:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
-     --mode local --max-problems 50
+     --mode finetune --max-problems 100 --num-beams 5
 
-2. 本地模型微调（使用默认输出目录）:
+2. 后续运行 - 使用缓存（修改超参数后快速实验）:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
-     --mode finetune --max-problems 100
+     --mode finetune --max-problems 100 --num-beams 5
 
-3. 本地模型微调（自定义输出目录）:
+=== 工作流B：固定训练样本（确保实验一致性） ===
+
+3. 生成固定样本（local模式）:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode local --max-problems 100 \\
+     --fixed-sample-path ./fixed_samples.json
+
+4. 使用固定样本进行微调:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
      --mode finetune --max-problems 100 \\
-     --output-dir ./my_custom_checkpoints
+     --fixed-sample-path ./fixed_samples.json
 
-4. OpenAI实验:
+=== 其他模式 ===
+
+5. OpenAI实验:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model gpt-4 --mode openai \\
      --api-key YOUR_KEY --max-problems 30
 
-5. DeepSeek API实验:
+6. DeepSeek API实验:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-chat --mode deepseek \\
      --api-key YOUR_KEY --max-problems 30
+
+=== 高级选项 ===
+
+7. 强制重新采样（忽略缓存）:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100 \\
+     --force-resample
+
+8. 禁用缓存功能:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100 \\
+     --use-cached-sampling false
         """)
     
     # 基本参数
@@ -919,6 +1115,16 @@ def main():
     parser.add_argument('--p2value-alpha', type=float, default=0.5,
                        help='P2Value权重α')
     
+    # 采样缓存参数
+    parser.add_argument('--use-cached-sampling', action='store_true', default=True,
+                       help='使用缓存的采样结果（如果存在）')
+    parser.add_argument('--force-resample', action='store_true',
+                       help='强制重新采样，忽略缓存')
+    
+    # 固定样本参数
+    parser.add_argument('--fixed-sample-path', type=str, default=None,
+                       help='指定一个JSON文件，从中加载固定样本')
+    
     # 其他参数
     parser.add_argument('--seed', type=int, default=42,
                        help='随机种子')
@@ -950,6 +1156,8 @@ def main():
     print(f"  P2Value Alpha: {args.p2value_alpha}")
     if args.mode == "finetune":
         print(f"  输出目录: {args.output_dir}")
+    if args.fixed_sample_path:
+        print(f"  固定样本路径: {args.fixed_sample_path}")
     
     # 创建实验实例
     experiment = MBBPBTPExperiment(
@@ -960,7 +1168,8 @@ def main():
         sampling_method=args.sampling_method,
         sampling_alpha=args.sampling_alpha,
         p2value_alpha=args.p2value_alpha,
-        output_dir=args.output_dir # 传递output_dir参数
+        output_dir=args.output_dir, # 传递output_dir参数
+        fixed_sample_path=args.fixed_sample_path # 传递fixed_sample_path参数
     )
     
     # 运行实验
