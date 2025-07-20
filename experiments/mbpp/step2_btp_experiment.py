@@ -550,7 +550,8 @@ class MBBPBTPExperiment(Step2BTPExperiment):
     def __init__(self, model_name: str = None, model_type: str = "local", 
                  api_key: str = None, api_base: str = None,
                  sampling_method: str = "power", sampling_alpha: float = 1.0, 
-                 p2value_alpha: float = 0.5, output_dir: str = "./mbpp_btp_checkpoints"):
+                 p2value_alpha: float = 0.5, output_dir: str = "./mbpp_btp_checkpoints",
+                 fixed_sample_path: str = None):
         
         # 设置基本模型信息
         self.model_name = model_name or "deepseek-ai/deepseek-coder-1.3b-instruct"
@@ -558,6 +559,7 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         self.api_key = api_key
         self.api_base = api_base
         self.output_dir = output_dir
+        self.fixed_sample_path = fixed_sample_path
         
         # BTP特定参数  
         self.sampling_method = sampling_method
