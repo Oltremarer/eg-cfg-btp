@@ -790,7 +790,31 @@ def heap_queue_largest(nums,n):
         """阶段1: Beam Search采样"""
         print("🔍 阶段1: Beam Search采样")
         
-        for task_id, problem in tqdm(problems_list, desc="Beam Search采样"):
+        # 进度保存相关
+        progress_file = os.path.join(self.output_dir, "sampling_progress.json")
+        processed_problems = set()
+        
+        # 加载已有进度
+        if os.path.exists(progress_file):
+            try:
+                with open(progress_file, 'r', encoding='utf-8') as f:
+                    progress_data = json.load(f)
+                    processed_problems = set(progress_data.get('processed_problems', []))
+                print(f"📂 加载已有进度: 已处理 {len(processed_problems)} 个问题")
+            except Exception as e:
+                print(f"⚠️  加载进度失败: {e}")
+        
+        # 过滤已处理的问题
+        remaining_problems = [(task_id, problem) for task_id, problem in problems_list 
+                            if str(task_id) not in processed_problems]
+        
+        if len(remaining_problems) == 0:
+            print("✅ 所有问题已处理完成")
+            return
+        
+        print(f"📊 剩余待处理问题: {len(remaining_problems)}")
+        
+        for task_id, problem in tqdm(remaining_problems, desc="Beam Search采样"):
             prompt = self.format_prompt(problem)
             
             try:
@@ -847,6 +871,37 @@ def heap_queue_largest(nums,n):
             except Exception as e:
                 print(f"⚠️  问题 {task_id} 生成失败: {e}")
                 continue
+            
+            # 更新进度
+            processed_problems.add(str(task_id))
+            
+            # 定期保存进度
+            if len(processed_problems) % getattr(self, 'save_interval', 50) == 0:
+                self._save_progress(progress_file, processed_problems)
+        
+        # 最终保存进度
+        self._save_progress(progress_file, processed_problems)
+        print(f"✅ 阶段1完成，共处理 {len(processed_problems)} 个问题")
+    
+    def _save_progress(self, progress_file: str, processed_problems: set):
+        """保存进度"""
+        try:
+            progress_data = {
+                'processed_problems': list(processed_problems),
+                'timestamp': datetime.now().isoformat(),
+                'total_experiences': len(self.experience_buffer.get_all_experiences())
+            }
+            
+            # 确保目录存在
+            os.makedirs(os.path.dirname(progress_file), exist_ok=True)
+            
+            with open(progress_file, 'w', encoding='utf-8') as f:
+                json.dump(progress_data, f, indent=2, ensure_ascii=False)
+            
+            print(f"💾 进度已保存: {len(processed_problems)} 个问题")
+            
+        except Exception as e:
+            print(f"⚠️  保存进度失败: {e}")
     
     def phase2_pper_training(self, n_iterations: int, batch_size: int):
         """阶段2: 优先经验回放训练，支持固定样本集"""
@@ -1130,6 +1185,10 @@ def main():
                        help='随机种子')
     parser.add_argument('--debug', action='store_true',
                        help='启用调试日志')
+    parser.add_argument('--gpu-id', type=int, default=None,
+                       help='指定GPU设备ID')
+    parser.add_argument('--save-interval', type=int, default=50,
+                       help='每处理多少个问题保存一次进度')
     
     args = parser.parse_args()
     
@@ -1146,6 +1205,14 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(args.seed)
     
+    # 设置GPU设备
+    if args.gpu_id is not None and torch.cuda.is_available():
+        if args.gpu_id < torch.cuda.device_count():
+            torch.cuda.set_device(args.gpu_id)
+            print(f"🎯 使用GPU {args.gpu_id}: {torch.cuda.get_device_name(args.gpu_id)}")
+        else:
+            print(f"⚠️  GPU {args.gpu_id} 不存在，使用默认GPU")
+    
     # 打印配置
     print("🚀 MBPP BTP实验配置:")
     print(f"  模型: {args.model}")
@@ -1158,6 +1225,9 @@ def main():
         print(f"  输出目录: {args.output_dir}")
     if args.fixed_sample_path:
         print(f"  固定样本路径: {args.fixed_sample_path}")
+    if torch.cuda.is_available():
+        print(f"  当前GPU: {torch.cuda.current_device()} - {torch.cuda.get_device_name()}")
+        print(f"  GPU内存: {torch.cuda.get_device_properties(torch.cuda.current_device()).total_memory / 1024**3:.1f} GB")
     
     # 创建实验实例
     experiment = MBBPBTPExperiment(
@@ -1171,6 +1241,9 @@ def main():
         output_dir=args.output_dir, # 传递output_dir参数
         fixed_sample_path=args.fixed_sample_path # 传递fixed_sample_path参数
     )
+    
+    # 设置保存间隔
+    experiment.save_interval = args.save_interval
     
     # 运行实验
     try:
