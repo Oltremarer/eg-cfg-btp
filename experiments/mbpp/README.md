@@ -146,6 +146,34 @@ python experiments/mbpp/step2_btp_experiment.py \
   --mode finetune --max-problems 500 --num-beams 10
 ```
 
+### 3. 多GPU并行实验
+对于大规模数据集，可以使用多GPU并行处理：
+
+#### GPU 0 - DeepSeek模型
+```bash
+CUDA_VISIBLE_DEVICES=0 python experiments/mbpp/step2_btp_experiment.py \
+  --model deepseek-ai/deepseek-coder-1.3b-instruct \
+  --mode local --max-problems 974 --num-beams 10 \
+  --output-dir ./btp_workspace_deepseek \
+  --gpu-id 0 --save-interval 50 --force-resample
+```
+
+#### GPU 1 - CodeLlama模型
+```bash
+CUDA_VISIBLE_DEVICES=1 python experiments/mbpp/step2_btp_experiment.py \
+  --model codellama/CodeLlama-7b-Instruct-hf \
+  --mode local --max-problems 974 --num-beams 10 \
+  --output-dir ./btp_workspace_codellama \
+  --gpu-id 0 --save-interval 50 --force-resample
+```
+
+**说明**:
+- `CUDA_VISIBLE_DEVICES=X`: 指定使用的GPU
+- `--gpu-id 0`: 在指定GPU上使用设备0
+- `--save-interval 50`: 每50个问题保存一次进度
+- `--force-resample`: 强制重新采样
+- 进度文件保存在各自的输出目录中
+
 ### 3. 对比实验
 使用工作流B确保实验的公平性：
 ```bash
