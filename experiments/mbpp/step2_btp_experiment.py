@@ -995,8 +995,8 @@ def heap_queue_largest(nums,n):
         print("🔍 开始阶段1: Beam Search采样")
         self.phase1_beam_search_sampling(problems_list, num_beams)
         
-        # 保存采样结果（仅在微调模式下）
-        if self.model_type == "finetune":
+        # 保存采样结果（如果启用了缓存功能）
+        if use_cached_sampling:
             self.save_sampling_results(max_problems, num_beams)
         
         # 处理固定样本功能（在local模式下也支持）
@@ -1028,31 +1028,57 @@ def main():
         epilog="""
 使用示例:
 
-1. 本地模型BTP实验:
+=== 工作流A：自动化经验池缓存（推荐） ===
+
+1. 首次运行 - 生成缓存（使用finetune模式）:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
-     --mode local --max-problems 50
+     --mode finetune --max-problems 100 --num-beams 5
 
-2. 本地模型微调（使用默认输出目录）:
+2. 后续运行 - 使用缓存（修改超参数后快速实验）:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
-     --mode finetune --max-problems 100
+     --mode finetune --max-problems 100 --num-beams 5
 
-3. 本地模型微调（自定义输出目录）:
+=== 工作流B：固定训练样本（确保实验一致性） ===
+
+3. 生成固定样本（local模式）:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode local --max-problems 100 \\
+     --fixed-sample-path ./fixed_samples.json
+
+4. 使用固定样本进行微调:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
      --mode finetune --max-problems 100 \\
-     --output-dir ./my_custom_checkpoints
+     --fixed-sample-path ./fixed_samples.json
 
-4. OpenAI实验:
+=== 其他模式 ===
+
+5. OpenAI实验:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model gpt-4 --mode openai \\
      --api-key YOUR_KEY --max-problems 30
 
-5. DeepSeek API实验:
+6. DeepSeek API实验:
    python experiments/mbpp/step2_btp_experiment.py \\
      --model deepseek-chat --mode deepseek \\
      --api-key YOUR_KEY --max-problems 30
+
+=== 高级选项 ===
+
+7. 强制重新采样（忽略缓存）:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100 \\
+     --force-resample
+
+8. 禁用缓存功能:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100 \\
+     --use-cached-sampling false
         """)
     
     # 基本参数
