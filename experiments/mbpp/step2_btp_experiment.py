@@ -971,6 +971,55 @@ def heap_queue_largest(nums,n):
         
         return results
 
+    def run_experiment(self, max_problems: int = 100, num_beams: int = 5,
+                      n_iterations: int = 3, batch_size: int = 100,
+                      use_cached_sampling: bool = True, force_resample: bool = False) -> Dict[str, Any]:
+        """运行BTP实验（支持采样缓存和固定样本）"""
+        problems_list = self.run_on_problem_subset(max_problems)
+        
+        print(f"开始运行BTP实验，共 {len(problems_list)} 个问题")
+        
+        # 检查是否可以使用缓存的采样结果
+        if use_cached_sampling and not force_resample:
+            if self.check_sampling_cache_exists(max_problems, num_beams):
+                print("🔍 发现现有采样缓存，尝试加载...")
+                if self.load_sampling_results(max_problems, num_beams):
+                    print("✅ 成功加载缓存的采样结果，跳过采样阶段")
+                    # 直接进入阶段2
+                    self.phase2_pper_training(n_iterations, batch_size)
+                    return self.get_experiment_results()
+                else:
+                    print("⚠️  缓存加载失败，将重新采样")
+        
+        # 阶段1: Beam Search采样
+        print("🔍 开始阶段1: Beam Search采样")
+        self.phase1_beam_search_sampling(problems_list, num_beams)
+        
+        # 保存采样结果（仅在微调模式下）
+        if self.model_type == "finetune":
+            self.save_sampling_results(max_problems, num_beams)
+        
+        # 处理固定样本功能（在local模式下也支持）
+        if self.fixed_sample_path and self.model_type == "local":
+            print("🔄 本地模式：处理固定样本功能...")
+            all_experiences = self.experience_buffer.get_all_experiences()
+            if all_experiences:
+                # 执行一次采样并保存
+                sampled_experiences = self.sampler.sample(all_experiences, batch_size)
+                print(f"💾 将 {len(sampled_experiences)} 个采样经验保存到: {self.fixed_sample_path}")
+                # 确保目录存在
+                os.makedirs(os.path.dirname(self.fixed_sample_path), exist_ok=True)
+                with open(self.fixed_sample_path, 'w', encoding='utf-8') as f:
+                    json.dump(sampled_experiences, f, indent=2, ensure_ascii=False)
+                print("✅ 固定样本保存完成")
+            else:
+                print("⚠️  经验池为空，无法保存固定样本")
+        
+        # 阶段2: 优先经验回放训练
+        self.phase2_pper_training(n_iterations, batch_size)
+        
+        return self.get_experiment_results()
+
 
 def main():
     parser = argparse.ArgumentParser(
