@@ -199,37 +199,32 @@ class ModelAdapter:
     
     def _generate_openai(self, prompt: str, num_beams: int = 5, 
                         temperature: float = 0.8, **kwargs) -> List[Dict]:
-        """OpenAI模型生成"""
-        results = []
-        
-        for i in range(num_beams):
-            try:
-                response = self.client.generate_completion(
-                    prompt=prompt,
-                    temperature=temperature,
-                    max_tokens=512
-                )
-                
-                results.append({
-                    'code': response.get('content', ''),
-                    'possibility': 0.8,  # OpenAI不提供具体概率
-                    'log_prob': -5.0,
-                    'beam_rank': i,
-                    'sequence_length': len(response.get('content', ''))
-                })
-                
-            except Exception as e:
-                print(f"OpenAI生成失败 (beam {i}): {e}")
-                results.append({
-                    'code': '',
-                    'possibility': 0.0,
-                    'log_prob': -100.0,
-                    'beam_rank': i,
-                    'sequence_length': 0,
-                    'error': str(e)
-                })
-        
-        return results
+        """OpenAI模型生成 - 支持真实概率的修复版本"""
+        try:
+            # 使用新的概率感知方法，一次性生成多个候选
+            results = self.client.generate_code_with_probs(
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=512,
+                n=num_beams,  # 一次生成多个候选，效率更高
+                logprobs=True,  # 获取真实概率
+                top_logprobs=5
+            )
+            
+            print(f"✅ OpenAI生成成功: {len(results)}个候选，概率范围: {min(r['possibility'] for r in results):.4f} - {max(r['possibility'] for r in results):.4f}")
+            return results
+            
+        except Exception as e:
+            print(f"❌ OpenAI生成失败: {e}")
+            # 返回空结果而不是假概率
+            return [{
+                'code': '',
+                'possibility': 0.0,
+                'log_prob': -100.0,
+                'beam_rank': i,
+                'sequence_length': 0,
+                'error': str(e)
+            } for i in range(num_beams)]
     
     def _generate_api(self, prompt: str, num_beams: int = 5, 
                      temperature: float = 0.8, **kwargs) -> List[Dict]:
