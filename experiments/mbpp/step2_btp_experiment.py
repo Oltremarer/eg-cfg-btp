@@ -153,7 +153,7 @@ class ModelAdapter:
     def _generate_local(self, prompt: str, num_beams: int = 5, 
                        temperature: float = 0.8, max_tokens: int = 512,
                        **kwargs) -> List[Dict]:
-        """本地模型生成"""
+        """本地模型生成 - 兼容新版transformers"""
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         
@@ -169,7 +169,7 @@ class ModelAdapter:
                 output_scores=True,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
-                **kwargs
+                use_cache=True  # 新版本必须明确设置
             )
         
         results = []
