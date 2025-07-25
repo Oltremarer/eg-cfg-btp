@@ -150,16 +150,26 @@ class ModelAdapter:
         else:
             raise ValueError(f"不支持的模型类型: {self.model_type}")
     
-    def _generate_local(self, prompt: str, num_beams: int = 5, 
+    def _generate_local(self, prompt, num_beams: int = 5, 
                        temperature: float = 0.8, max_tokens: int = 512,
-                       **kwargs) -> List[Dict]:
-        """本地模型生成 - 兼容新版transformers"""
-        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        
+                       **kwargs) -> list:
+        """本地模型生成 - 经过最终优化的版本"""
+        # 判断prompt类型并应用模板
+        if isinstance(prompt, list):
+            input_ids = self.tokenizer.apply_chat_template(
+                prompt,
+                add_generation_prompt=True,
+                return_tensors="pt"
+            ).to(self.device)
+        else:
+            inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+            input_ids = inputs.input_ids.to(self.device)
+
+        input_ids_len = input_ids.shape[1]
+
         with torch.no_grad():
             outputs = self.model.generate(
-                **inputs,
+                input_ids=input_ids,  # 使用关键字参数，更规范
                 num_beams=num_beams,
                 num_return_sequences=num_beams,
                 max_new_tokens=max_tokens,
@@ -169,20 +179,27 @@ class ModelAdapter:
                 output_scores=True,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
-                use_cache=True  # 新版本必须明确设置
+                use_cache=True
             )
-        
+
         results = []
         sequences = outputs.sequences
-        scores = outputs.sequences_scores if hasattr(outputs, 'sequences_scores') else None
+        scores = getattr(outputs, 'sequences_scores', None)
         
         for i, sequence in enumerate(sequences):
-            generated_text = self.tokenizer.decode(sequence, skip_special_tokens=True)
-            code = generated_text[len(prompt):].strip()
-            
+            output_ids = sequence[input_ids_len:]
+            # 更稳健的代码后处理，去除markdown代码块
+            decoded_code = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
+            if decoded_code.startswith("```python"):
+                decoded_code = decoded_code[len("```python"):].strip()
+            if decoded_code.endswith("```"):
+                decoded_code = decoded_code[:-3].strip()
+            code = decoded_code
+
             if scores is not None:
                 log_prob = scores[i].item()
-                possibility = min(math.exp(log_prob / len(sequence)), 1.0)
+                output_len = len(output_ids) if len(output_ids) > 0 else 1
+                possibility = min(math.exp(log_prob / output_len), 1.0)
             else:
                 log_prob = -10.0
                 possibility = 0.5
@@ -192,7 +209,7 @@ class ModelAdapter:
                 'possibility': possibility,
                 'log_prob': log_prob,
                 'beam_rank': i,
-                'sequence_length': len(sequence) - inputs['input_ids'].shape[1]
+                'sequence_length': len(output_ids)
             })
         
         return results
@@ -508,20 +525,43 @@ class MBTPFineTuningManager:
         print("✅ 微调完成")
     
     def _prepare_training_dataset(self, experiences: List[Dict]) -> Dataset:
-        """准备训练数据集"""
-        texts = []
-        
+        """
+        准备训练数据集 - 与推理时格式统一，指令模型用chat模板
+        """
+        processed_texts = []
         for exp in experiences:
-            instruction = f"Solve this programming problem:\n{exp['problem_text']}"
-            response = exp['code']
-            
-            text = f"### Instruction:\n{instruction}\n\n### Response:\n{response}{self.model_adapter.tokenizer.eos_token}"
-            texts.append(text)
-        
+            problem_dict = {'text': exp['problem_text'], 'test_list': list(exp.get('test_results', {}).keys())}
+            model_name = self.model_adapter.model_name.lower()
+            is_instruct = any(x in model_name for x in ["instruct", "chat", "deepseek-coder-v2-lite", "deepseek-coder-instruct", "qwen", "chatglm"])
+            if is_instruct:
+                system_prompt = (
+                    "You are an expert Python programmer. Your task is to write a "
+                    "Python function that solves a programming problem. "
+                    "Please implement the function in a single, clean block of code. "
+                    "Do not generate any explanatory text, comments, or markdown formatting like ```python."
+                )
+                user_instruction = f"Problem: {problem_dict['text']}\n\n"
+                if problem_dict.get('test_list'):
+                    test_cases_str = "\n".join(problem_dict['test_list'])
+                    user_instruction += (
+                        "The function should pass the following tests:\n"
+                        f"{test_cases_str}\n\n"
+                    )
+                user_instruction += "Provide the complete Python code for the function now."
+                response_code = exp['code']
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_instruction},
+                    {"role": "assistant", "content": response_code}
+                ]
+                formatted_text = self.model_adapter.tokenizer.apply_chat_template(
+                    messages, tokenize=False, add_generation_prompt=False
+                ) + self.model_adapter.tokenizer.eos_token
+            else:
+                prompt = f'"""\n{problem_dict["text"]}\n"""\n'
+                formatted_text = prompt + exp['code'] + self.model_adapter.tokenizer.eos_token
+            processed_texts.append(formatted_text)
         def tokenize_function(examples):
-            if isinstance(examples['text'], str):
-                examples['text'] = [examples['text']]
-            
             tokenized = self.model_adapter.tokenizer(
                 examples['text'],
                 truncation=True,
@@ -529,13 +569,10 @@ class MBTPFineTuningManager:
                 max_length=1024,
                 return_tensors="pt"
             )
-            
             tokenized["labels"] = tokenized["input_ids"].clone()
             return tokenized
-        
-        dataset = Dataset.from_dict({'text': texts})
+        dataset = Dataset.from_dict({'text': processed_texts})
         tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=['text'])
-        
         return tokenized_dataset
 
 
@@ -702,37 +739,39 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         """加载MBPP数据集"""
         return load_mbpp_problems()
     
-    def format_prompt(self, problem: Dict[str, Any]) -> str:
-        """使用智能Prompt模板格式化问题"""
-        
-        # 临时禁用few-shot examples以修复0%通过率问题
-        # TODO: 后续优化few-shot examples的prompt模板
-        use_examples = False  # 原来是：self.model_config.use_examples
-        examples = None
-        
-        if use_examples:
-            # 为DeepSeek等模型准备few-shot examples
-            examples = self._get_few_shot_examples()
-        
-        # 使用智能prompt引擎生成prompt
-        prompt = get_model_prompt(
-            model_name=self.model_name,
-            dataset="mbpp", 
-            problem=problem,
-            system_prompt=None,  # 使用默认系统prompt
-            use_examples=use_examples,
-            examples=examples
-        )
-        
-        # 如果返回的是messages格式（OpenAI/Claude），转换为字符串
-        if isinstance(prompt, list):
-            # 提取用户消息内容
-            for msg in prompt:
-                if msg["role"] == "user":
-                    return msg["content"]
-            return str(prompt)
-        
-        return prompt
+    def format_prompt(self, problem: dict) -> object:
+        """
+        根据模型类型自动生成合适的prompt格式。
+        - DeepSeek/ChatGLM3/Qwen等指令模型：返回消息列表
+        - Llama/GPT等基础模型：返回字符串
+        """
+        model_name = self.model_name.lower()
+        is_instruct = any(x in model_name for x in [
+            "instruct", "chat", "deepseek-coder-v2-lite", "deepseek-coder-instruct", "qwen", "chatglm"
+        ])
+        user_instruction = f"Problem: {problem['text']}\n\n"
+        if problem.get('test_list'):
+            test_cases_str = "\n".join(problem['test_list'])
+            user_instruction += (
+                "The function should pass the following tests:\n"
+                f"{test_cases_str}\n\n"
+            )
+        user_instruction += "Provide the complete Python code for the function now."
+        if is_instruct:
+            system_prompt = (
+                "You are an expert Python programmer. Your task is to write a "
+                "Python function that solves a programming problem. "
+                "Please implement the function in a single, clean block of code. "
+                "Do not generate any explanatory text, comments, or markdown formatting like ```python."
+            )
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_instruction}
+            ]
+            return messages
+        else:
+            prompt = f'"""\n{problem["text"]}\n"""\n'
+            return prompt
     
     def _get_few_shot_examples(self) -> List[Dict[str, Any]]:
         """获取few-shot示例（特别针对DeepSeek等模型）"""
@@ -819,7 +858,7 @@ def heap_queue_largest(nums,n):
                 candidates = self.adapter.generate(
                     prompt, 
                     num_beams=num_beams,
-                    temperature=0.8,
+                    temperature=0.2,  # 更低温度
                     max_tokens=512
                 )
                 
