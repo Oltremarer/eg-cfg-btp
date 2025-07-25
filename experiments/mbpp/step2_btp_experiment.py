@@ -153,28 +153,28 @@ class ModelAdapter:
     def _generate_local(self, prompt, num_beams: int = 5,
                         temperature: float = 0.8, max_tokens: int = 512,
                         **kwargs) -> list:
-        """本地模型生成 - 最终修复版，包含 attention_mask"""
-        
-        # 移除之前的诊断代码，因为它已完成使命
+        """本地模型生成 - 修复了'Tensor' object has no attribute 'items'错误"""
         
         if isinstance(prompt, list):
-            # ### 关键修正 1: 接收 tokenizer 输出的完整字典（包含 input_ids 和 attention_mask） ###
-            inputs = self.tokenizer.apply_chat_template(
+            # apply_chat_template 返回一个 Tensor，我们需要手动创建 attention_mask
+            input_ids = self.tokenizer.apply_chat_template(
                 prompt,
                 add_generation_prompt=True,
                 return_tensors="pt"
-            )
+            ).to(self.device)
+            # 对于左填充的单条输入，attention_mask 就是一个全1的张量
+            attention_mask = torch.ones_like(input_ids).to(self.device)
+            inputs_for_generate = {'input_ids': input_ids, 'attention_mask': attention_mask}
         else:
+            # 标准的 tokenizer 调用会返回一个包含 attention_mask 的字典
             inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
-            
-        # 将所有张量移动到设备上
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        input_ids_len = inputs['input_ids'].shape[1]
+            inputs_for_generate = {k: v.to(self.device) for k, v in inputs.items()}
+
+        input_ids_len = inputs_for_generate['input_ids'].shape[1]
 
         with torch.no_grad():
             outputs = self.model.generate(
-                # ### 关键修正 2: 使用字典解包 `**inputs` 来同时传递 input_ids 和 attention_mask ###
-                **inputs,
+                **inputs_for_generate,  # 同时传递 input_ids 和 attention_mask
                 num_beams=num_beams,
                 num_return_sequences=num_beams,
                 max_new_tokens=max_tokens,
@@ -187,6 +187,7 @@ class ModelAdapter:
                 use_cache=True
             )
 
+        # --- 后续的代码保持不变 ---
         results = []
         sequences = outputs.sequences
         scores = getattr(outputs, 'sequences_scores', None)
