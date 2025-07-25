@@ -37,6 +37,7 @@ from tqdm import tqdm
 from collections import defaultdict, deque
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+import re
 
 # 添加项目根目录到路径
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
@@ -153,28 +154,22 @@ class ModelAdapter:
     def _generate_local(self, prompt, num_beams: int = 5,
                         temperature: float = 0.8, max_tokens: int = 512,
                         **kwargs) -> list:
-        """本地模型生成 - 修复了'Tensor' object has no attribute 'items'错误"""
+        """本地模型生成 - 最终版，包含健壮的代码提取逻辑"""
         
         if isinstance(prompt, list):
-            # apply_chat_template 返回一个 Tensor，我们需要手动创建 attention_mask
             input_ids = self.tokenizer.apply_chat_template(
-                prompt,
-                add_generation_prompt=True,
-                return_tensors="pt"
+                prompt, add_generation_prompt=True, return_tensors="pt"
             ).to(self.device)
-            # 对于左填充的单条输入，attention_mask 就是一个全1的张量
             attention_mask = torch.ones_like(input_ids).to(self.device)
             inputs_for_generate = {'input_ids': input_ids, 'attention_mask': attention_mask}
         else:
-            # 标准的 tokenizer 调用会返回一个包含 attention_mask 的字典
             inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
             inputs_for_generate = {k: v.to(self.device) for k, v in inputs.items()}
 
         input_ids_len = inputs_for_generate['input_ids'].shape[1]
 
         with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs_for_generate,  # 同时传递 input_ids 和 attention_mask
+            outputs = self.model.generate(**inputs_for_generate, 
                 num_beams=num_beams,
                 num_return_sequences=num_beams,
                 max_new_tokens=max_tokens,
@@ -187,19 +182,27 @@ class ModelAdapter:
                 use_cache=True
             )
 
-        # --- 后续的代码保持不变 ---
         results = []
         sequences = outputs.sequences
         scores = getattr(outputs, 'sequences_scores', None)
         
         for i, sequence in enumerate(sequences):
             output_ids = sequence[input_ids_len:]
-            decoded_code = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
-            if decoded_code.startswith("```python"):
-                decoded_code = decoded_code[len("```python"):].strip()
-            if decoded_code.endswith("```"):
-                decoded_code = decoded_code[:-3].strip()
-            code = decoded_code
+            full_output = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
+            
+            # ### 关键修正：使用正则表达式提取代码 ###
+            code = full_output
+            # 尝试匹配 markdown 代码块
+            match = re.search(r"```(?:python\n)?(.*?)```", full_output, re.DOTALL)
+            if match:
+                # 如果找到，提取代码块内容
+                code = match.group(1).strip()
+            else:
+                # 如果没有找到 markdown 块，就假定整个输出都是代码
+                # 并尝试移除可能的解释性文字（这是一个备用策略）
+                if "Explanation:" in code:
+                    code = code.split("Explanation:")[0].strip()
+            # ### 修正结束 ###
 
             if scores is not None:
                 log_prob = scores[i].item()
@@ -210,11 +213,8 @@ class ModelAdapter:
                 possibility = 0.5
             
             results.append({
-                'code': code,
-                'possibility': possibility,
-                'log_prob': log_prob,
-                'beam_rank': i,
-                'sequence_length': len(output_ids)
+                'code': code, 'possibility': possibility, 'log_prob': log_prob,
+                'beam_rank': i, 'sequence_length': len(output_ids)
             })
         
         return results
