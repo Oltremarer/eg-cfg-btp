@@ -1,0 +1,384 @@
+{
+  "experiment_type": "MBPP_BTP",
+  "model_name": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+  "mode": "local",
+  "target_model": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+  "sampling_method": "power",
+  "sampling_alpha": 1.0,
+  "p2value_alpha": 0.5,
+  "experience_stats": {
+    "total_experiences": 6,
+    "avg_p2value": 0.6663072153771754,
+    "max_p2value": 0.999926601101514,
+    "min_p2value": 0.4990724589041057,
+    "avg_pass_rate": 0.3333333333333333,
+    "fully_passed_count": 2,
+    "zero_passed_count": 4,
+    "sample_experiences": [
+      {
+        "problem_id": "12",
+        "problem_text": "Write a function to sort a given matrix in ascending order according to the sum of its rows.",
+        "code": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda row: sum(row))",
+        "possibility": 0.9998532022030281,
+        "pass_rate": 1.0,
+        "passed_tests": 3,
+        "total_tests": 3,
+        "test_results": {
+          "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+            "result": true,
+            "time": 0.06473207473754883,
+            "error": null
+          },
+          "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+            "result": true,
+            "time": 0.05764031410217285,
+            "error": null
+          },
+          "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+            "result": true,
+            "time": 0.05414724349975586,
+            "error": null
+          }
+        },
+        "beam_rank": 0,
+        "p2value": 0.999926601101514
+      },
+      {
+        "problem_id": "12",
+        "problem_text": "Write a function to sort a given matrix in ascending order according to the sum of its rows.",
+        "code": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda row: sum(row))\n\n# Test cases\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]]) == [[1, 1, 1], [1, 2, 3], [2, 4, 5]]\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]]) == [[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\nassert sort_matrix([[5,8,9],[6,4,3],[2,1,4]]) == [[2, 1, 4], [6, 4, 3], [5, 8, 9]]",
+        "possibility": 0.9997458188365901,
+        "pass_rate": 1.0,
+        "passed_tests": 3,
+        "total_tests": 3,
+        "test_results": {
+          "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+            "result": true,
+            "time": 0.05569052696228027,
+            "error": null
+          },
+          "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+            "result": true,
+            "time": 0.05301523208618164,
+            "error": null
+          },
+          "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+            "result": true,
+            "time": 0.05189156532287598,
+            "error": null
+          }
+        },
+        "beam_rank": 1,
+        "p2value": 0.999872909418295
+      },
+      {
+        "problem_id": "11",
+        "problem_text": "Write a python function to remove first and last occurrence of a given character from the string.",
+        "code": "def remove_Occ(string, char):\n    if len(string) <= 2:\n        return \"\"\n    return string[0] + string[1:].replace(char, \"\", 1).replace(char, \"\", -1)\n\n# Test cases\nassert remove_Occ(\"hello\",\"l\") == \"heo\"\nassert remove_Occ(\"abcda\",\"a\") == \"bcd\"\nassert remove_Occ(\"PHP\",\"P\") == \"H\"",
+        "possibility": 0.9984428717463626,
+        "pass_rate": 0.0,
+        "passed_tests": 0,
+        "total_tests": 3,
+        "test_results": {
+          "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+            "result": false,
+            "time": 0.05294299125671387,
+            "error": null
+          },
+          "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+            "result": false,
+            "time": 0.04451322555541992,
+            "error": null
+          },
+          "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+            "result": false,
+            "time": 0.057401418685913086,
+            "error": null
+          }
+        },
+        "beam_rank": 0,
+        "p2value": 0.4992214358731813
+      },
+      {
+        "problem_id": "11",
+        "problem_text": "Write a python function to remove first and last occurrence of a given character from the string.",
+        "code": "def remove_Occ(string, char):\n    if len(string) <= 2:\n        return \"\"\n    return string[0] + string[1:].replace(char, \"\")\n\n# Test cases\nassert remove_Occ(\"hello\",\"l\") == \"heo\"\nassert remove_Occ(\"abcda\",\"a\") == \"bcd\"\nassert remove_Occ(\"PHP\",\"P\") == \"H\"",
+        "possibility": 0.9981449178082114,
+        "pass_rate": 0.0,
+        "passed_tests": 0,
+        "total_tests": 3,
+        "test_results": {
+          "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+            "result": false,
+            "time": 0.05700850486755371,
+            "error": null
+          },
+          "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+            "result": false,
+            "time": 0.04760003089904785,
+            "error": null
+          },
+          "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+            "result": false,
+            "time": 0.04595637321472168,
+            "error": null
+          }
+        },
+        "beam_rank": 1,
+        "p2value": 0.4990724589041057
+      },
+      {
+        "problem_id": "13",
+        "problem_text": "Write a function to count the most common words in a dictionary.",
+        "code": "from collections import Counter\n\ndef count_common(words):\n    counts = Counter(words)\n    return counts.most_common(len(set(words)))\n\n# Test cases\nassert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]\nassert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]\nassert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]",
+        "possibility": 0.9998158361099296,
+        "pass_rate": 0.0,
+        "passed_tests": 0,
+        "total_tests": 3,
+        "test_results": {
+          "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+            "result": false,
+            "time": 0.07819151878356934,
+            "error": null
+          },
+          "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+            "result": false,
+            "time": 0.07100510597229004,
+            "error": null
+          },
+          "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+            "result": false,
+            "time": 0.06781268119812012,
+            "error": null
+          }
+        },
+        "beam_rank": 0,
+        "p2value": 0.4999079180549648
+      },
+      {
+        "problem_id": "13",
+        "problem_text": "Write a function to count the most common words in a dictionary.",
+        "code": "from collections import Counter\n\ndef count_common(words):\n    counts = Counter(words)\n    return counts.most_common(len(set(words)))\n\n# Test cases\nprint(count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']))\nprint(count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']))\nprint(count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']))",
+        "possibility": 0.9996839378219831,
+        "pass_rate": 0.0,
+        "passed_tests": 0,
+        "total_tests": 3,
+        "test_results": {
+          "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+            "result": false,
+            "time": 0.058776140213012695,
+            "error": null
+          },
+          "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+            "result": false,
+            "time": 0.05585122108459473,
+            "error": null
+          },
+          "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+            "result": false,
+            "time": 0.054605722427368164,
+            "error": null
+          }
+        },
+        "beam_rank": 1,
+        "p2value": 0.49984196891099153
+      }
+    ]
+  },
+  "all_experiences": [
+    {
+      "problem_id": "11",
+      "problem_text": "Write a python function to remove first and last occurrence of a given character from the string.",
+      "code": "def remove_Occ(string, char):\n    if len(string) <= 2:\n        return \"\"\n    return string[0] + string[1:].replace(char, \"\", 1).replace(char, \"\", -1)\n\n# Test cases\nassert remove_Occ(\"hello\",\"l\") == \"heo\"\nassert remove_Occ(\"abcda\",\"a\") == \"bcd\"\nassert remove_Occ(\"PHP\",\"P\") == \"H\"",
+      "possibility": 0.9984428717463626,
+      "pass_rate": 0.0,
+      "passed_tests": 0,
+      "total_tests": 3,
+      "test_results": {
+        "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+          "result": false,
+          "time": 0.05294299125671387,
+          "error": null
+        },
+        "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+          "result": false,
+          "time": 0.04451322555541992,
+          "error": null
+        },
+        "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+          "result": false,
+          "time": 0.057401418685913086,
+          "error": null
+        }
+      },
+      "beam_rank": 0,
+      "p2value": 0.4992214358731813
+    },
+    {
+      "problem_id": "11",
+      "problem_text": "Write a python function to remove first and last occurrence of a given character from the string.",
+      "code": "def remove_Occ(string, char):\n    if len(string) <= 2:\n        return \"\"\n    return string[0] + string[1:].replace(char, \"\")\n\n# Test cases\nassert remove_Occ(\"hello\",\"l\") == \"heo\"\nassert remove_Occ(\"abcda\",\"a\") == \"bcd\"\nassert remove_Occ(\"PHP\",\"P\") == \"H\"",
+      "possibility": 0.9981449178082114,
+      "pass_rate": 0.0,
+      "passed_tests": 0,
+      "total_tests": 3,
+      "test_results": {
+        "assert remove_Occ(\"hello\",\"l\") == \"heo\"": {
+          "result": false,
+          "time": 0.05700850486755371,
+          "error": null
+        },
+        "assert remove_Occ(\"abcda\",\"a\") == \"bcd\"": {
+          "result": false,
+          "time": 0.04760003089904785,
+          "error": null
+        },
+        "assert remove_Occ(\"PHP\",\"P\") == \"H\"": {
+          "result": false,
+          "time": 0.04595637321472168,
+          "error": null
+        }
+      },
+      "beam_rank": 1,
+      "p2value": 0.4990724589041057
+    },
+    {
+      "problem_id": "12",
+      "problem_text": "Write a function to sort a given matrix in ascending order according to the sum of its rows.",
+      "code": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda row: sum(row))",
+      "possibility": 0.9998532022030281,
+      "pass_rate": 1.0,
+      "passed_tests": 3,
+      "total_tests": 3,
+      "test_results": {
+        "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+          "result": true,
+          "time": 0.06473207473754883,
+          "error": null
+        },
+        "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+          "result": true,
+          "time": 0.05764031410217285,
+          "error": null
+        },
+        "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+          "result": true,
+          "time": 0.05414724349975586,
+          "error": null
+        }
+      },
+      "beam_rank": 0,
+      "p2value": 0.999926601101514
+    },
+    {
+      "problem_id": "12",
+      "problem_text": "Write a function to sort a given matrix in ascending order according to the sum of its rows.",
+      "code": "def sort_matrix(matrix):\n    return sorted(matrix, key=lambda row: sum(row))\n\n# Test cases\nassert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]]) == [[1, 1, 1], [1, 2, 3], [2, 4, 5]]\nassert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]]) == [[-2, 4, -5], [1, -1, 1], [1, 2, 3]]\nassert sort_matrix([[5,8,9],[6,4,3],[2,1,4]]) == [[2, 1, 4], [6, 4, 3], [5, 8, 9]]",
+      "possibility": 0.9997458188365901,
+      "pass_rate": 1.0,
+      "passed_tests": 3,
+      "total_tests": 3,
+      "test_results": {
+        "assert sort_matrix([[1, 2, 3], [2, 4, 5], [1, 1, 1]])==[[1, 1, 1], [1, 2, 3], [2, 4, 5]]": {
+          "result": true,
+          "time": 0.05569052696228027,
+          "error": null
+        },
+        "assert sort_matrix([[1, 2, 3], [-2, 4, -5], [1, -1, 1]])==[[-2, 4, -5], [1, -1, 1], [1, 2, 3]]": {
+          "result": true,
+          "time": 0.05301523208618164,
+          "error": null
+        },
+        "assert sort_matrix([[5,8,9],[6,4,3],[2,1,4]])==[[2, 1, 4], [6, 4, 3], [5, 8, 9]]": {
+          "result": true,
+          "time": 0.05189156532287598,
+          "error": null
+        }
+      },
+      "beam_rank": 1,
+      "p2value": 0.999872909418295
+    },
+    {
+      "problem_id": "13",
+      "problem_text": "Write a function to count the most common words in a dictionary.",
+      "code": "from collections import Counter\n\ndef count_common(words):\n    counts = Counter(words)\n    return counts.most_common(len(set(words)))\n\n# Test cases\nassert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]\nassert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]\nassert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]",
+      "possibility": 0.9998158361099296,
+      "pass_rate": 0.0,
+      "passed_tests": 0,
+      "total_tests": 3,
+      "test_results": {
+        "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+          "result": false,
+          "time": 0.07819151878356934,
+          "error": null
+        },
+        "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+          "result": false,
+          "time": 0.07100510597229004,
+          "error": null
+        },
+        "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+          "result": false,
+          "time": 0.06781268119812012,
+          "error": null
+        }
+      },
+      "beam_rank": 0,
+      "p2value": 0.4999079180549648
+    },
+    {
+      "problem_id": "13",
+      "problem_text": "Write a function to count the most common words in a dictionary.",
+      "code": "from collections import Counter\n\ndef count_common(words):\n    counts = Counter(words)\n    return counts.most_common(len(set(words)))\n\n# Test cases\nprint(count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']))\nprint(count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']))\nprint(count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']))",
+      "possibility": 0.9996839378219831,
+      "pass_rate": 0.0,
+      "passed_tests": 0,
+      "total_tests": 3,
+      "test_results": {
+        "assert count_common(['red','green','black','pink','black','white','black','eyes','white','black','orange','pink','pink','red','red','white','orange','white',\"black\",'pink','green','green','pink','green','pink','white','orange',\"orange\",'red']) == [('pink', 6), ('black', 5), ('white', 5), ('red', 4)]": {
+          "result": false,
+          "time": 0.058776140213012695,
+          "error": null
+        },
+        "assert count_common(['one', 'two', 'three', 'four', 'five', 'one', 'two', 'one', 'three', 'one']) == [('one', 4), ('two', 2), ('three', 2), ('four', 1)]": {
+          "result": false,
+          "time": 0.05585122108459473,
+          "error": null
+        },
+        "assert count_common(['Facebook', 'Apple', 'Amazon', 'Netflix', 'Google', 'Apple', 'Netflix', 'Amazon']) == [('Apple', 2), ('Amazon', 2), ('Netflix', 2), ('Facebook', 1)]": {
+          "result": false,
+          "time": 0.054605722427368164,
+          "error": null
+        }
+      },
+      "beam_rank": 1,
+      "p2value": 0.49984196891099153
+    }
+  ],
+  "config": {
+    "dataset_name": "mbpp",
+    "model_name": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+    "timestamp": "2025-07-25T05:46:06.680528",
+    "dataset_config": {
+      "name": "mbpp",
+      "description": "Mostly Basic Python Problems",
+      "data_path": "data/mbpp",
+      "prompt_template": "english",
+      "test_timeout": 10.0,
+      "max_code_length": 2048,
+      "supported_languages": [
+        "python"
+      ],
+      "evaluation_metrics": [
+        "pass@1",
+        "pass@5",
+        "pass@10"
+      ],
+      "default_params": {
+        "num_samples": 10,
+        "temperature": 0.8,
+        "max_problems": 50
+      }
+    }
+  }
+}
