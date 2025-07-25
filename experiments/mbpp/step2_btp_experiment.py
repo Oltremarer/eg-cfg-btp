@@ -150,39 +150,31 @@ class ModelAdapter:
         else:
             raise ValueError(f"不支持的模型类型: {self.model_type}")
     
-    def _generate_local(self, prompt, num_beams: int = 5, 
-                       temperature: float = 0.8, max_tokens: int = 512,
-                       **kwargs) -> list:
-        """本地模型生成 - 经过最终优化的版本"""
-        # 判断prompt类型并应用模板
+    def _generate_local(self, prompt, num_beams: int = 5,
+                        temperature: float = 0.8, max_tokens: int = 512,
+                        **kwargs) -> list:
+        """本地模型生成 - 最终修复版，包含 attention_mask"""
+        
+        # 移除之前的诊断代码，因为它已完成使命
+        
         if isinstance(prompt, list):
-            if not hasattr(self, '_debug_prompt_printed'):
-                print("\n" + "="*50)
-                print(">>> 诊断信息: 检查 Tokenizer 应用模板后的真实 Prompt <<<")
-            # 将 token IDs 解码回字符串，看看特殊标记是否真的存在
-                temp_prompt_str = self.tokenizer.decode(
-                    self.tokenizer.apply_chat_template(
-                        prompt, add_generation_prompt=True, return_tensors="pt"
-                    )[0]
-                )
-                print(temp_prompt_str)
-                print("="*50 + "\n")
-                self._debug_prompt_printed = True
-                
-            input_ids = self.tokenizer.apply_chat_template(
+            # ### 关键修正 1: 接收 tokenizer 输出的完整字典（包含 input_ids 和 attention_mask） ###
+            inputs = self.tokenizer.apply_chat_template(
                 prompt,
                 add_generation_prompt=True,
                 return_tensors="pt"
-            ).to(self.device)
+            )
         else:
             inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
-            input_ids = inputs.input_ids.to(self.device)
-
-        input_ids_len = input_ids.shape[1]
+            
+        # 将所有张量移动到设备上
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        input_ids_len = inputs['input_ids'].shape[1]
 
         with torch.no_grad():
             outputs = self.model.generate(
-                input_ids=input_ids,  # 使用关键字参数，更规范
+                # ### 关键修正 2: 使用字典解包 `**inputs` 来同时传递 input_ids 和 attention_mask ###
+                **inputs,
                 num_beams=num_beams,
                 num_return_sequences=num_beams,
                 max_new_tokens=max_tokens,
@@ -201,7 +193,6 @@ class ModelAdapter:
         
         for i, sequence in enumerate(sequences):
             output_ids = sequence[input_ids_len:]
-            # 更稳健的代码后处理，去除markdown代码块
             decoded_code = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
             if decoded_code.startswith("```python"):
                 decoded_code = decoded_code[len("```python"):].strip()
