@@ -1071,11 +1071,22 @@ def heap_queue_largest(nums,n):
         
         return results
 
-    def run_experiment(self, max_problems: int = 100, num_beams: int = 5,
+    def run_on_problem_subset(self, max_problems: int, offset: int = 0) -> List[tuple]:
+        """加载并返回指定数量和偏移量的问题子集"""
+        problems = self.load_dataset()
+        problems_list = sorted(problems.items())
+        
+        # 应用偏移量和限制
+        start_index = min(offset, len(problems_list))
+        end_index = min(start_index + max_problems, len(problems_list))
+        
+        return problems_list[start_index:end_index]
+
+    def run_experiment(self, max_problems: int = 100, problem_offset: int = 0, num_beams: int = 5,
                       n_iterations: int = 3, batch_size: int = 100,
                       use_cached_sampling: bool = True, force_resample: bool = False) -> Dict[str, Any]:
         """运行BTP实验（支持采样缓存和固定样本）"""
-        problems_list = self.run_on_problem_subset(max_problems)
+        problems_list = self.run_on_problem_subset(max_problems, offset=problem_offset)
         
         print(f"开始运行BTP实验，共 {len(problems_list)} 个问题")
         
@@ -1239,6 +1250,9 @@ def main():
     parser.add_argument('--save-interval', type=int, default=50,
                        help='每处理多少个问题保存一次进度')
     
+    parser.add_argument('--problem-offset', type=int, default=0,
+                       help='从第几个问题开始选择 max-problems')
+    
     args = parser.parse_args()
     
     # 设置日志
@@ -1303,6 +1317,7 @@ def main():
     try:
         results = experiment.run_experiment(
             max_problems=args.max_problems,
+            problem_offset=args.problem_offset, # 添加这一行
             num_beams=args.num_beams,
             n_iterations=args.n_iterations,
             batch_size=args.batch_size
