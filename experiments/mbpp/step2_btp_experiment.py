@@ -660,8 +660,12 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         print(f"   优化参数: {self.optimal_params}")
     
     def _get_sampling_cache_filename(self, max_problems: int, num_beams: int) -> str:
-        """生成采样缓存文件名"""
-        model_name_safe = self.model_name.replace("/", "_").replace("-", "_")
+        """生成采样缓存文件名（智能判断使用哪个模型名）"""
+        # 如果设置了 teacher_model_for_cache 属性，就用它来找缓存文件
+        # 否则，就用 self.model_name (当前运行的模型名)
+        model_name_for_cache = getattr(self, 'teacher_model_for_cache', self.model_name)
+        
+        model_name_safe = model_name_for_cache.replace("/", "_").replace("-", "_")
         return f"sampling_cache_{model_name_safe}_max{max_problems}_beams{num_beams}.json"
     
     def _get_sampling_cache_path(self, max_problems: int, num_beams: int) -> str:
@@ -1190,6 +1194,10 @@ def main():
     parser.add_argument('--api-key', type=str,
                        help='API密钥')
     
+    # 在下方添加这块代码
+    parser.add_argument('--teacher-model', type=str, default=None,
+                       help='用于加载采样缓存的Teacher模型名称 (仅在微调模式下使用)')
+    
     # 实验参数
     parser.add_argument('--max-problems', type=int, default=50,
                        help='最大问题数量')
@@ -1282,6 +1290,11 @@ def main():
         output_dir=args.output_dir, # 传递output_dir参数
         fixed_sample_path=args.fixed_sample_path # 传递fixed_sample_path参数
     )
+    
+    # 在下方添加这块代码
+    # 如果命令行传入了 teacher-model, 将其设置到 experiment 对象上
+    if args.teacher_model:
+        experiment.teacher_model_for_cache = args.teacher_model
     
     # 设置保存间隔
     experiment.save_interval = args.save_interval
