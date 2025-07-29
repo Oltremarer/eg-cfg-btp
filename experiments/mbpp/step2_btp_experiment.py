@@ -703,31 +703,36 @@ class MBBPBTPExperiment(Step2BTPExperiment):
         
         return cache_path
     
-    def load_sampling_results(self, max_problems: int, num_beams: int) -> bool:
-        """从缓存文件加载采样结果"""
-        cache_path = self._get_sampling_cache_path(max_problems, num_beams)
-        
+    def load_sampling_results(self, cache_path: str) -> bool:
+        """从指定的缓存文件路径加载采样结果"""
         if not os.path.exists(cache_path):
-            print(f"⚠️  缓存文件不存在: {cache_path}")
+            print(f"⚠️  指定的缓存文件不存在: {cache_path}")
             return False
         
         try:
             with open(cache_path, 'r', encoding='utf-8') as f:
-                cache_data = json.load(f)
+                data = json.load(f)
             
-            # 验证缓存数据
-            if cache_data.get('model_name') != self.model_name:
-                print(f"⚠️  缓存模型不匹配: 缓存={cache_data.get('model_name')}, 当前={self.model_name}")
-                return False
-            
-            # 加载经验数据到缓冲区
-            experiences = cache_data.get('experiences', [])
+            # 在微调模式下，我们通常加载的是一个样本列表
+            if isinstance(data, list):
+                 experiences = data
+                 cache_model_name = "N/A (loaded from list)"
+                 timestamp = "N/A (loaded from list)"
+            # 兼容我们之前保存的带元数据的缓存文件
+            elif isinstance(data, dict):
+                 experiences = data.get('experiences', [])
+                 cache_model_name = data.get('model_name', 'N/A')
+                 timestamp = data.get('timestamp', 'N/A')
+            else:
+                raise ValueError("无法识别的缓存文件格式")
+
             for exp in experiences:
                 self.experience_buffer.add_experience(exp)
             
-            print(f"📂 从缓存加载采样结果: {cache_path}")
+            print(f"📂 从指定路径加载采样结果: {cache_path}")
             print(f"   共加载 {len(experiences)} 个经验样本")
-            print(f"   缓存时间: {cache_data.get('timestamp', 'N/A')}")
+            print(f"   缓存中的模型名: {cache_model_name}")
+            print(f"   缓存时间: {timestamp}")
             
             return True
             
@@ -1084,47 +1089,42 @@ def heap_queue_largest(nums,n):
 
     def run_experiment(self, max_problems: int = 100, problem_offset: int = 0, num_beams: int = 5,
                       n_iterations: int = 3, batch_size: int = 100,
-                      use_cached_sampling: bool = True, force_resample: bool = False) -> Dict[str, Any]:
-        """运行BTP实验（支持采样缓存和固定样本）"""
-        problems_list = self.run_on_problem_subset(max_problems, offset=problem_offset)
+                      use_cached_sampling: bool = True, force_resample: bool = False,
+                      sample_cache_path: Optional[str] = None) -> Dict[str, Any]:
+        """运行BTP实验（支持手动指定缓存和自动查找）"""
         
-        print(f"开始运行BTP实验，共 {len(problems_list)} 个问题")
+        should_sample = True
         
-        # 检查是否可以使用缓存的采样结果
-        if use_cached_sampling and not force_resample:
-            if self.check_sampling_cache_exists(max_problems, num_beams):
-                print("🔍 发现现有采样缓存，尝试加载...")
-                if self.load_sampling_results(max_problems, num_beams):
-                    print("✅ 成功加载缓存的采样结果，跳过采样阶段")
-                    # 直接进入阶段2
-                    self.phase2_pper_training(n_iterations, batch_size)
-                    return self.get_experiment_results()
-                else:
-                    print("⚠️  缓存加载失败，将重新采样")
-        
-        # 阶段1: Beam Search采样
-        print("🔍 开始阶段1: Beam Search采样")
-        self.phase1_beam_search_sampling(problems_list, num_beams)
-        
-        # 保存采样结果（如果启用了缓存功能）
-        if use_cached_sampling:
-            self.save_sampling_results(max_problems, num_beams)
-        
-        # 处理固定样本功能（在local模式下也支持）
-        if self.fixed_sample_path and self.model_type == "local":
-            print("🔄 本地模式：处理固定样本功能...")
-            all_experiences = self.experience_buffer.get_all_experiences()
-            if all_experiences:
-                # 执行一次采样并保存
-                sampled_experiences = self.sampler.sample(all_experiences, batch_size)
-                print(f"💾 将 {len(sampled_experiences)} 个采样经验保存到: {self.fixed_sample_path}")
-                # 确保目录存在
-                os.makedirs(os.path.dirname(self.fixed_sample_path), exist_ok=True)
-                with open(self.fixed_sample_path, 'w', encoding='utf-8') as f:
-                    json.dump(sampled_experiences, f, indent=2, ensure_ascii=False)
-                print("✅ 固定样本保存完成")
+        # ### 核心修改：优先处理手动指定的缓存路径 ###
+        if sample_cache_path:
+            if self.load_sampling_results(sample_cache_path):
+                print("✅ 成功从手动指定的路径加载缓存，跳过采样阶段。")
+                should_sample = False
             else:
-                print("⚠️  经验池为空，无法保存固定样本")
+                print("⚠️  无法从手动路径加载缓存，将继续执行采样流程。")
+        # 如果没有手动指定路径，则使用自动查找逻辑
+        elif use_cached_sampling and not force_resample:
+            auto_cache_path = self._get_sampling_cache_path(max_problems, num_beams)
+            if os.path.exists(auto_cache_path):
+                print(f"🔍 发现自动查找的缓存文件，尝试加载: {auto_cache_path}")
+                if self.load_sampling_results(auto_cache_path):
+                    print("✅ 成功加载自动查找到的缓存，跳过采样阶段。")
+                    should_sample = False
+                else:
+                    print("⚠️  自动缓存加载失败，将重新采样。")
+            else:
+                print("ℹ️  未发现自动查找的缓存文件，将进行采样。")
+
+        # 根据 should_sample 标志决定是否执行阶段1
+        if should_sample:
+            print("🔍 开始阶段1: Beam Search采样")
+            problems_list = self.run_on_problem_subset(max_problems, offset=problem_offset)
+            print(f"共处理 {len(problems_list)} 个问题")
+            self.phase1_beam_search_sampling(problems_list, num_beams)
+            
+            # 保存采样结果
+            if use_cached_sampling:
+                self.save_sampling_results(max_problems, num_beams)
         
         # 阶段2: 优先经验回放训练
         self.phase2_pper_training(n_iterations, batch_size)
@@ -1240,6 +1240,9 @@ def main():
     parser.add_argument('--fixed-sample-path', type=str, default=None,
                        help='指定一个JSON文件，从中加载固定样本')
     
+    parser.add_argument('--sample-cache-path', type=str, default=None,
+                       help='直接指定要加载的采样缓存文件路径，将覆盖自动查找逻辑')
+    
     # 其他参数
     parser.add_argument('--seed', type=int, default=42,
                        help='随机种子')
@@ -1320,7 +1323,10 @@ def main():
             problem_offset=args.problem_offset, # 添加这一行
             num_beams=args.num_beams,
             n_iterations=args.n_iterations,
-            batch_size=args.batch_size
+            batch_size=args.batch_size,
+            use_cached_sampling=args.use_cached_sampling, # 确保传递
+            force_resample=args.force_resample,         # 确保传递
+            sample_cache_path=args.sample_cache_path    # ### 添加这一行 ###
         )
         
         # 保存结果
