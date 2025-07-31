@@ -456,67 +456,67 @@ class MBTPFineTuningManager:
     """MBPP BTP微调管理器"""
     
     def __init__(self, model_adapter: ModelAdapter, use_lora: bool = True, 
-                 lora_config: Optional[Dict] = None, output_dir: str = "./mbpp_btp_checkpoints"):
+                 output_dir: str = "./mbpp_btp_checkpoints", **kwargs):
         self.model_adapter = model_adapter
         self.use_lora = use_lora
         self.output_dir = output_dir
-        self.lora_config = lora_config or {
-            'r': 16,
-            'lora_alpha': 32,
-            'lora_dropout': 0.1
-        }
-        
-        if self.use_lora and HF_AVAILABLE:
-            self._setup_lora()
+        # LoRA将在 finetune_on_experiences 调用时根据参数动态设置
     
-    def _setup_lora(self):
-        """设置LoRA微调"""
-        if self.model_adapter.model_type not in ["local", "finetune"]:
-            print("⚠️  LoRA微调仅支持本地模型")
+    def _setup_lora(self, r: int, lora_alpha: int, lora_dropout: float):
+        """设置LoRA微调，使用传入的参数"""
+        if not self.use_lora or not HF_AVAILABLE:
             return
-        
+
+        # 避免重复应用 LoRA
+        if hasattr(self.model_adapter.model, 'peft_config'):
+            print("ℹ️ LoRA 配置已存在，跳过设置。")
+            return
+
         lora_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM,
-            r=self.lora_config['r'],
-            lora_alpha=self.lora_config['lora_alpha'],
-            lora_dropout=self.lora_config['lora_dropout'],
+            r=r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]
         )
         
         self.model_adapter.model = get_peft_model(self.model_adapter.model, lora_config)
-        print("✅ LoRA配置完成")
+        print(f"✅ LoRA配置完成 (r={r}, alpha={lora_alpha}, dropout={lora_dropout})")
     
     def finetune_on_experiences(self, experiences: List[Dict], 
-                               training_args: Optional[TrainingArguments] = None) -> None:
-        """基于经验进行微调"""
+                                 learning_rate: float = 1e-6, warmup_steps: int = 10,
+                                 per_device_batch_size: int = 2, grad_accum_steps: int = 4,
+                                 lora_r: int = 16, lora_alpha: int = 32, lora_dropout: float = 0.1,
+                                 training_args: Optional[TrainingArguments] = None, **kwargs) -> None:
+        """基于经验进行微调，使用传入的参数"""
         if self.model_adapter.model_type not in ["local", "finetune"]:
             print("⚠️  微调仅支持本地模型")
             return
         
-        # 准备训练数据
+        # 根据传入参数动态设置 LoRA
+        self._setup_lora(r=lora_r, lora_alpha=lora_alpha, lora_dropout=lora_dropout)
+
         train_dataset = self._prepare_training_dataset(experiences)
         
         if training_args is None:
             training_args = TrainingArguments(
-                output_dir=self.output_dir,  # 使用自定义输出目录
+                output_dir=self.output_dir,
                 num_train_epochs=1,
-                per_device_train_batch_size=2,
-                gradient_accumulation_steps=4,
-                warmup_steps=10,
-                learning_rate=1e-6,  # 大幅减少学习率，从1e-4改为1e-6
+                per_device_train_batch_size=per_device_batch_size,
+                gradient_accumulation_steps=grad_accum_steps,
+                warmup_steps=warmup_steps,
+                learning_rate=learning_rate,
                 fp16=True,
                 logging_steps=5,
                 save_steps=100,
                 remove_unused_columns=False,
             )
         
-        # 数据整理器
         data_collator = DataCollatorForLanguageModeling(
             tokenizer=self.model_adapter.tokenizer,
             mlm=False,
         )
         
-        # 训练器
         trainer = Trainer(
             model=self.model_adapter.model,
             args=training_args,
@@ -953,67 +953,37 @@ def heap_queue_largest(nums,n):
         except Exception as e:
             print(f"⚠️  保存进度失败: {e}")
     
-    def phase2_pper_training(self, n_iterations: int, batch_size: int):
-        """阶段2: 优先经验回放训练，支持固定样本集"""
+    def phase2_pper_training(self, n_iterations: int, batch_size: int, min_pass_rate: float = 1.0, **kwargs):
+        """阶段2: 优先经验回放训练，使用传入的参数"""
         print(f"🎯 阶段2: 优先经验回放训练 ({n_iterations} 轮迭代)")
         
         if self.finetuning_manager is None:
             print("⚠️  跳过微调阶段（当前模式不支持微调）")
             return
+            
+        all_experiences = self.experience_buffer.get_all_experiences()
         
-        # 初始化用于训练的经验列表
-        training_experiences = None
-        
-        # 如果指定了固定样本路径，则执行"采样一次或加载"逻辑
-        if self.fixed_sample_path:
-            # 检查文件是否已存在
-            if os.path.exists(self.fixed_sample_path):
-                print(f"🔄 从固定样本文件加载经验: {self.fixed_sample_path}")
-                try:
-                    with open(self.fixed_sample_path, 'r', encoding='utf-8') as f:
-                        training_experiences = json.load(f)
-                    print(f"   成功加载 {len(training_experiences)} 个固定样本")
-                except Exception as e:
-                    print(f"❌ 加载固定样本失败: {e}")
-                    return
-            else:
-                # 文件不存在，则执行一次采样并保存
-                print("🔄 首次运行，执行一次性采样并保存固定样本...")
-                all_experiences = self.experience_buffer.get_all_experiences()
-                if not all_experiences:
-                    print("⚠️  经验池为空，无法进行采样和训练。")
-                    return
-                
-                training_experiences = self.sampler.sample(all_experiences, batch_size)
-                
-                print(f"💾 将 {len(training_experiences)} 个采样经验保存到: {self.fixed_sample_path}")
-                # 确保目录存在
-                os.makedirs(os.path.dirname(self.fixed_sample_path), exist_ok=True)
-                with open(self.fixed_sample_path, 'w', encoding='utf-8') as f:
-                    json.dump(training_experiences, f, indent=2, ensure_ascii=False)
-        
-        # --- 主训练循环 ---
+        print(f"筛选前总经验数: {len(all_experiences)}")
+        filtered_experiences = [exp for exp in all_experiences if exp.get('pass_rate', 0) >= min_pass_rate]
+        print(f"筛选后 (pass_rate >= {min_pass_rate}) 经验数: {len(filtered_experiences)}")
+
+        if not filtered_experiences:
+            print("⚠️  没有符合 pass_rate 条件的经验，跳过微调。")
+            return
+            
         for iteration in range(n_iterations):
             print(f"\n📈 迭代 {iteration + 1}/{n_iterations}")
             
-            # 如果没有使用固定样本模式，则每次都重新采样（原始逻辑）
-            if not self.fixed_sample_path:
-                all_experiences = self.experience_buffer.get_all_experiences()
-                if not all_experiences:
-                    print("⚠️  没有可用经验，跳过此轮迭代")
-                    continue
-                training_experiences = self.sampler.sample(all_experiences, batch_size)
+            training_experiences = self.sampler.sample(filtered_experiences, batch_size)
             
-            # 检查是否有可用于训练的经验
             if not training_experiences:
-                print("⚠️  没有可用于训练的经验，跳过此轮迭代。")
+                print("⚠️  没有采样到经验，跳过此轮迭代。")
                 continue
             
             print(f"📊 使用 {len(training_experiences)} 个经验进行本轮训练")
             
-            # 执行微调
             try:
-                self.finetuning_manager.finetune_on_experiences(training_experiences)
+                self.finetuning_manager.finetune_on_experiences(training_experiences, **kwargs)
                 print(f"✅ 迭代 {iteration + 1} 微调完成")
             except Exception as e:
                 print(f"❌ 迭代 {iteration + 1} 微调失败: {e}")
@@ -1090,8 +1060,8 @@ def heap_queue_largest(nums,n):
     def run_experiment(self, max_problems: int = 100, problem_offset: int = 0, num_beams: int = 5,
                       n_iterations: int = 3, batch_size: int = 100,
                       use_cached_sampling: bool = True, force_resample: bool = False,
-                      sample_cache_path: Optional[str] = None) -> Dict[str, Any]:
-        """运行BTP实验（支持手动指定缓存和自动查找）"""
+                      sample_cache_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """运行BTP实验（支持手动指定缓存和所有微调参数）"""
         
         should_sample = True
         
@@ -1127,7 +1097,7 @@ def heap_queue_largest(nums,n):
                 self.save_sampling_results(max_problems, num_beams)
         
         # 阶段2: 优先经验回放训练
-        self.phase2_pper_training(n_iterations, batch_size)
+        self.phase2_pper_training(n_iterations, batch_size, **kwargs)
         
         return self.get_experiment_results()
 
@@ -1190,6 +1160,66 @@ def main():
      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
      --mode finetune --max-problems 100 \\
      --use-cached-sampling false
+
+=== LoRA微调参数 ===
+
+9. 启用LoRA微调:
+   python experiments/mbpp/step2_btp_experiment.py \\
+     --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+     --mode finetune --max-problems 100 \\
+     --use-lora true
+
+10. 设置LoRA r维度:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --lora-r 16
+
+11. 设置LoRA alpha:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --lora-alpha 32
+
+12. 设置LoRA dropout:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --lora-dropout 0.1
+
+=== 训练参数 ===
+
+13. 设置微调学习率:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --learning-rate 1e-6
+
+14. 设置Warmup Steps:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --warmup-steps 10
+
+15. 设置Per-Device Batch Size:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --per-device-batch-size 2
+
+16. 设置Gradient Accumulation Steps:
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --grad-accum-steps 4
+
+=== 数据筛选参数 ===
+
+17. 设置最小通过率 (筛选经验):
+    python experiments/mbpp/step2_btp_experiment.py \\
+      --model deepseek-ai/deepseek-coder-1.3b-instruct \\
+      --mode finetune --max-problems 100 \\
+      --min-pass-rate 0.8
         """)
     
     # 基本参数
@@ -1242,6 +1272,22 @@ def main():
     
     parser.add_argument('--sample-cache-path', type=str, default=None,
                        help='直接指定要加载的采样缓存文件路径，将覆盖自动查找逻辑')
+    
+    # LoRA微调参数
+    parser.add_argument('--use-lora', action='store_true', default=False,
+                       help='启用LoRA微调')
+    parser.add_argument('--lora-r', type=int, default=16, help='LoRA r dimension')
+    parser.add_argument('--lora-alpha', type=int, default=32, help='LoRA alpha')
+    parser.add_argument('--lora-dropout', type=float, default=0.1, help='LoRA dropout')
+
+    # 训练参数
+    parser.add_argument('--learning-rate', type=float, default=1e-6, help='微调时使用的学习率')
+    parser.add_argument('--warmup-steps', type=int, default=10, help='Number of warmup steps for learning rate scheduler')
+    parser.add_argument('--per-device-batch-size', type=int, default=2, help='Batch size per GPU during training')
+    parser.add_argument('--grad-accum-steps', type=int, default=4, help='Gradient accumulation steps')
+
+    # 数据筛选参数
+    parser.add_argument('--min-pass-rate', type=float, default=1.0, help='Minimum pass_rate for samples to be included in finetuning')
     
     # 其他参数
     parser.add_argument('--seed', type=int, default=42,
@@ -1326,7 +1372,16 @@ def main():
             batch_size=args.batch_size,
             use_cached_sampling=args.use_cached_sampling, # 确保传递
             force_resample=args.force_resample,         # 确保传递
-            sample_cache_path=args.sample_cache_path    # ### 添加这一行 ###
+            sample_cache_path=args.sample_cache_path,    # ### 添加这一行 ###
+            # 传递所有新的微调参数
+            learning_rate=args.learning_rate,
+            lora_r=args.lora_r,
+            lora_alpha=args.lora_alpha,
+            lora_dropout=args.lora_dropout,
+            warmup_steps=args.warmup_steps,
+            per_device_batch_size=args.per_device_batch_size,
+            grad_accum_steps=args.grad_accum_steps,
+            min_pass_rate=args.min_pass_rate
         )
         
         # 保存结果
