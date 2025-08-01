@@ -120,6 +120,13 @@ class ModelAdapter:
         
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
+        
+        # 在这里插入新代码
+        print("--- Tokenizer Special Tokens Check ---")
+        print(f"  EOS token: {self.tokenizer.eos_token} (ID: {self.tokenizer.eos_token_id})")
+        print(f"  PAD token: {self.tokenizer.pad_token} (ID: {self.tokenizer.pad_token_id})")
+        print(f"  BOS token: {self.tokenizer.bos_token} (ID: {self.tokenizer.bos_token_id})")
+        print("------------------------------------")
     
     def _setup_openai_model(self):
         """设置OpenAI模型"""
@@ -608,6 +615,20 @@ class MBTPFineTuningManager:
                 labels[i, :prompt_len] = -100 # 将prompt部分的label设为-100
             
             full_tokenized["labels"] = labels.tolist()
+            
+            # 【新增的调试代码】
+            if random.random() < 0.01: # 随机打印1%的样本用于检查
+                print("\n--- 调试Label Masking ---")
+                # 将-100替换为pad_token以便解码查看
+                debug_labels = [l if l != -100 else self.model_adapter.tokenizer.pad_token_id for l in full_tokenized["labels"][0]]
+                
+                decoded_inputs = self.model_adapter.tokenizer.decode(full_tokenized["input_ids"][0], skip_special_tokens=False)
+                decoded_labels = self.model_adapter.tokenizer.decode(debug_labels, skip_special_tokens=False)
+                
+                print(f"原始输入解码:\n{decoded_inputs}\n")
+                print(f"标签解码 (Prompt部分应为PAD):\n{decoded_labels}\n")
+                print("--------------------------\n")
+            
             return full_tokenized
 
         dataset = Dataset.from_list(data_to_tokenize)
