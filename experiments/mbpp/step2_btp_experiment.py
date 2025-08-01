@@ -487,6 +487,7 @@ class MBTPFineTuningManager:
                                  learning_rate: float = 1e-6, warmup_steps: int = 10,
                                  per_device_batch_size: int = 2, grad_accum_steps: int = 4,
                                  lora_r: int = 16, lora_alpha: int = 32, lora_dropout: float = 0.1,
+                                 num_train_epochs: int = 1,
                                  training_args: Optional[TrainingArguments] = None, **kwargs) -> None:
         """基于经验进行微调，使用传入的参数"""
         if self.model_adapter.model_type not in ["local", "finetune"]:
@@ -501,7 +502,7 @@ class MBTPFineTuningManager:
         if training_args is None:
             training_args = TrainingArguments(
                 output_dir=self.output_dir,
-                num_train_epochs=1,
+                num_train_epochs=num_train_epochs,
                 per_device_train_batch_size=per_device_batch_size,
                 gradient_accumulation_steps=grad_accum_steps,
                 warmup_steps=warmup_steps,
@@ -953,7 +954,7 @@ def heap_queue_largest(nums,n):
         except Exception as e:
             print(f"⚠️  保存进度失败: {e}")
     
-    def phase2_pper_training(self, n_iterations: int, batch_size: int, min_pass_rate: float = 1.0, **kwargs):
+    def phase2_pper_training(self, n_iterations: int, batch_size: int, min_pass_rate: float = 1.0, num_train_epochs: int = 1, **kwargs):
         """阶段2: 优先经验回放训练，使用传入的参数"""
         print(f"🎯 阶段2: 优先经验回放训练 ({n_iterations} 轮迭代)")
         
@@ -983,7 +984,7 @@ def heap_queue_largest(nums,n):
             print(f"📊 使用 {len(training_experiences)} 个经验进行本轮训练")
             
             try:
-                self.finetuning_manager.finetune_on_experiences(training_experiences, **kwargs)
+                self.finetuning_manager.finetune_on_experiences(training_experiences, num_train_epochs=num_train_epochs, **kwargs)
                 print(f"✅ 迭代 {iteration + 1} 微调完成")
             except Exception as e:
                 print(f"❌ 迭代 {iteration + 1} 微调失败: {e}")
@@ -1060,7 +1061,7 @@ def heap_queue_largest(nums,n):
     def run_experiment(self, max_problems: int = 100, problem_offset: int = 0, num_beams: int = 5,
                       n_iterations: int = 3, batch_size: int = 100,
                       use_cached_sampling: bool = True, force_resample: bool = False,
-                      sample_cache_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+                      sample_cache_path: Optional[str] = None, num_train_epochs: int = 1, **kwargs) -> Dict[str, Any]:
         """运行BTP实验（支持手动指定缓存和所有微调参数）"""
         
         should_sample = True
@@ -1097,7 +1098,7 @@ def heap_queue_largest(nums,n):
                 self.save_sampling_results(max_problems, num_beams)
         
         # 阶段2: 优先经验回放训练
-        self.phase2_pper_training(n_iterations, batch_size, **kwargs)
+        self.phase2_pper_training(n_iterations, batch_size, num_train_epochs=num_train_epochs, **kwargs)
         
         return self.get_experiment_results()
 
@@ -1246,6 +1247,8 @@ def main():
                        help='Beam Search数量')
     parser.add_argument('--n-iterations', type=int, default=2,
                        help='PPER训练迭代次数')
+    
+    parser.add_argument('--num-train-epochs', type=int, default=1, help='微调时使用的训练轮次数')
     parser.add_argument('--batch-size', type=int, default=50,
                        help='训练批大小')
     parser.add_argument('--output-dir', type=str, default='./mbpp_btp_checkpoints',
@@ -1381,7 +1384,8 @@ def main():
             warmup_steps=args.warmup_steps,
             per_device_batch_size=args.per_device_batch_size,
             grad_accum_steps=args.grad_accum_steps,
-            min_pass_rate=args.min_pass_rate
+            min_pass_rate=args.min_pass_rate,
+            num_train_epochs=args.num_train_epochs
         )
         
         # 保存结果
