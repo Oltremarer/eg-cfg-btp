@@ -538,7 +538,10 @@ class MBTPFineTuningManager:
         for exp in experiences:
             problem_dict = {'text': exp['problem_text'], 'test_list': list(exp.get('test_results', {}).keys())}
             model_name = self.model_adapter.model_name.lower()
-            is_instruct = any(x in model_name for x in ["instruct", "chat", "deepseek-coder-v2-lite", "deepseek-coder-instruct", "qwen", "chatglm"])
+            # is_instruct 的判断逻辑需要能够访问 args.force_instruct，这里暂时简化
+            # 假设 MBBPBTPExperiment 实例中已有 is_instruct_model 属性
+            is_instruct = "instruct" in model_name or "chat" in model_name or hasattr(self.model_adapter, 'force_instruct_flag')
+
             if is_instruct:
                 system_prompt = (
                     "You are an expert Python programmer. Your task is to write a "
@@ -567,16 +570,22 @@ class MBTPFineTuningManager:
                 prompt = f'"""\n{problem_dict["text"]}\n"""\n'
                 formatted_text = prompt + exp['code'] + self.model_adapter.tokenizer.eos_token
             processed_texts.append(formatted_text)
+
+        # --- 核心修改在这里 ---
         def tokenize_function(examples):
             tokenized = self.model_adapter.tokenizer(
                 examples['text'],
                 truncation=True,
-                padding=True,
+                # 关键：在 .map() 中不进行填充，也不返回 PyTorch Tensor
+                # 填充将由 DataCollator 在训练时动态处理
+                padding=False,
                 max_length=1024,
-                return_tensors="pt"
             )
-            tokenized["labels"] = tokenized["input_ids"].clone()
+            # 标签仍然是 input_ids 的拷贝
+            tokenized["labels"] = tokenized["input_ids"].copy()
             return tokenized
+        # --- 修改结束 ---
+
         dataset = Dataset.from_dict({'text': processed_texts})
         tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=['text'])
         return tokenized_dataset
