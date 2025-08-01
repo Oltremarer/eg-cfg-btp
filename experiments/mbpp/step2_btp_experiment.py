@@ -539,16 +539,16 @@ class MBTPFineTuningManager:
     
     def _prepare_training_dataset(self, experiences: List[Dict]) -> Dataset:
         """
-        准备训练数据集 - 【修正版】
-        - 与推理时格式统一，指令模型用chat模板
+        准备训练数据集 - 【最终修正版】
         - 关键修正：在labels中屏蔽掉prompt部分，只对回答部分计算损失
+        - 调试逻辑修正：确保只打印第一个批次的信息
         """
         data_to_tokenize = []
         for exp in experiences:
             problem_dict = {'text': exp['problem_text'], 'test_list': list(exp.get('test_results', {}).keys())}
             model_name = self.model_adapter.model_name.lower()
             
-            # --- 构建Prompt和Response ---
+            # --- 构建Prompt和Response (逻辑不变) ---
             is_instruct = any(x in model_name for x in ["instruct", "chat", "deepseek-coder-v2-lite", "deepseek-coder-instruct", "qwen", "chatglm"])
             
             if is_instruct:
@@ -567,14 +567,12 @@ class MBTPFineTuningManager:
                     )
                 user_instruction += "Provide the complete Python code for the function now."
                 
-                # 分别构建prompt部分和完整对话
                 prompt_messages = [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_instruction}
                 ]
                 full_messages = prompt_messages + [{"role": "assistant", "content": exp['code']}]
 
-                # apply_chat_template 会自动添加 special tokens
                 prompt_text = self.model_adapter.tokenizer.apply_chat_template(
                     prompt_messages, tokenize=False, add_generation_prompt=True
                 )
@@ -582,53 +580,47 @@ class MBTPFineTuningManager:
                     full_messages, tokenize=False, add_generation_prompt=False
                 ) + self.model_adapter.tokenizer.eos_token
 
-            else: # 非指令模型
+            else: 
                 prompt_text = f'"""\n{problem_dict["text"]}\n"""\n'
                 full_text = prompt_text + exp['code'] + self.model_adapter.tokenizer.eos_token
             
             data_to_tokenize.append({"prompt": prompt_text, "full_text": full_text})
 
-        # --- 分词与标签屏蔽 ---
-        def tokenize_function(examples):
-            # 分词完整文本
-            full_tokenized = self.model_adapter.tokenizer(
-                examples['full_text'],
-                truncation=True,
-                padding="max_length", # 使用 max_length 来确保批次内长度一致
-                max_length=1024
-            )
-            
-            # 分词Prompt文本，用于计算需要屏蔽的长度
-            prompt_tokenized = self.model_adapter.tokenizer(
-                examples['prompt'],
-                truncation=True,
-                max_length=1024
-            )
+        # 【修改部分】在 tokenize_function 外部定义一个标志位
+        has_printed_debug = False
 
-            # 创建labels的副本
+        def tokenize_function(examples):
+            # 【修改部分】声明要修改外部的标志位
+            nonlocal has_printed_debug
+            
+            # --- 分词与标签屏蔽 (逻辑不变) ---
+            full_tokenized = self.model_adapter.tokenizer(
+                examples['full_text'], truncation=True, padding="max_length", max_length=1024
+            )
+            prompt_tokenized = self.model_adapter.tokenizer(
+                examples['prompt'], truncation=True, max_length=1024
+            )
             labels = np.array(full_tokenized["input_ids"])
             prompt_lens = [len(p) for p in prompt_tokenized["input_ids"]]
-
-            # 屏蔽掉prompt部分的labels
             for i in range(len(labels)):
                 prompt_len = prompt_lens[i]
-                labels[i, :prompt_len] = -100 # 将prompt部分的label设为-100
-            
+                labels[i, :prompt_len] = -100
             full_tokenized["labels"] = labels.tolist()
             
-            # 【新增的调试代码】
-            if random.random() < 0.01: # 随机打印1%的样本用于检查
-                print("\n--- 调试Label Masking ---")
-                # 将-100替换为pad_token以便解码查看
-                debug_labels = [l if l != -100 else self.model_adapter.tokenizer.pad_token_id for l in full_tokenized["labels"][0]]
+            # 【修改后的确定性调试代码】
+            if not has_printed_debug:
+                print("\n--- 调试Label Masking (仅打印第一批) ---")
+                if full_tokenized["labels"]: # 确保批次不为空
+                    debug_labels = [l if l != -100 else self.model_adapter.tokenizer.pad_token_id for l in full_tokenized["labels"][0]]
+                    decoded_inputs = self.model_adapter.tokenizer.decode(full_tokenized["input_ids"][0], skip_special_tokens=False)
+                    decoded_labels = self.model_adapter.tokenizer.decode(debug_labels, skip_special_tokens=False)
+                    
+                    print(f"原始输入解码:\n{decoded_inputs}\n")
+                    print(f"标签解码 (Prompt部分应为PAD):\n{decoded_labels}\n")
                 
-                decoded_inputs = self.model_adapter.tokenizer.decode(full_tokenized["input_ids"][0], skip_special_tokens=False)
-                decoded_labels = self.model_adapter.tokenizer.decode(debug_labels, skip_special_tokens=False)
-                
-                print(f"原始输入解码:\n{decoded_inputs}\n")
-                print(f"标签解码 (Prompt部分应为PAD):\n{decoded_labels}\n")
-                print("--------------------------\n")
-            
+                print("------------------------------------------\n")
+                has_printed_debug = True # 打印后，将标志位置为True，确保不再打印
+
             return full_tokenized
 
         dataset = Dataset.from_list(data_to_tokenize)
