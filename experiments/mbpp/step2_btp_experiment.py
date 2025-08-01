@@ -532,16 +532,18 @@ class MBTPFineTuningManager:
     
     def _prepare_training_dataset(self, experiences: List[Dict]) -> Dataset:
         """
-        准备训练数据集 - 与推理时格式统一，指令模型用chat模板
+        准备训练数据集 - 【修正版】
+        - 与推理时格式统一，指令模型用chat模板
+        - 关键修正：在labels中屏蔽掉prompt部分，只对回答部分计算损失
         """
-        processed_texts = []
+        data_to_tokenize = []
         for exp in experiences:
             problem_dict = {'text': exp['problem_text'], 'test_list': list(exp.get('test_results', {}).keys())}
             model_name = self.model_adapter.model_name.lower()
-            # is_instruct 的判断逻辑需要能够访问 args.force_instruct，这里暂时简化
-            # 假设 MBBPBTPExperiment 实例中已有 is_instruct_model 属性
-            is_instruct = "instruct" in model_name or "chat" in model_name or hasattr(self.model_adapter, 'force_instruct_flag')
-
+            
+            # --- 构建Prompt和Response ---
+            is_instruct = any(x in model_name for x in ["instruct", "chat", "deepseek-coder-v2-lite", "deepseek-coder-instruct", "qwen", "chatglm"])
+            
             if is_instruct:
                 system_prompt = (
                     "You are an expert Python programmer. Your task is to write a "
@@ -557,37 +559,59 @@ class MBTPFineTuningManager:
                         f"{test_cases_str}\n\n"
                     )
                 user_instruction += "Provide the complete Python code for the function now."
-                response_code = exp['code']
-                messages = [
+                
+                # 分别构建prompt部分和完整对话
+                prompt_messages = [
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_instruction},
-                    {"role": "assistant", "content": response_code}
+                    {"role": "user", "content": user_instruction}
                 ]
-                formatted_text = self.model_adapter.tokenizer.apply_chat_template(
-                    messages, tokenize=False, add_generation_prompt=False
+                full_messages = prompt_messages + [{"role": "assistant", "content": exp['code']}]
+
+                # apply_chat_template 会自动添加 special tokens
+                prompt_text = self.model_adapter.tokenizer.apply_chat_template(
+                    prompt_messages, tokenize=False, add_generation_prompt=True
+                )
+                full_text = self.model_adapter.tokenizer.apply_chat_template(
+                    full_messages, tokenize=False, add_generation_prompt=False
                 ) + self.model_adapter.tokenizer.eos_token
-            else:
-                prompt = f'"""\n{problem_dict["text"]}\n"""\n'
-                formatted_text = prompt + exp['code'] + self.model_adapter.tokenizer.eos_token
-            processed_texts.append(formatted_text)
 
-        # --- 核心修改在这里 ---
+            else: # 非指令模型
+                prompt_text = f'"""\n{problem_dict["text"]}\n"""\n'
+                full_text = prompt_text + exp['code'] + self.model_adapter.tokenizer.eos_token
+            
+            data_to_tokenize.append({"prompt": prompt_text, "full_text": full_text})
+
+        # --- 分词与标签屏蔽 ---
         def tokenize_function(examples):
-            tokenized = self.model_adapter.tokenizer(
-                examples['text'],
+            # 分词完整文本
+            full_tokenized = self.model_adapter.tokenizer(
+                examples['full_text'],
                 truncation=True,
-                # 关键：在 .map() 中不进行填充，也不返回 PyTorch Tensor
-                # 填充将由 DataCollator 在训练时动态处理
-                padding=False,
-                max_length=1024,
+                padding="max_length", # 使用 max_length 来确保批次内长度一致
+                max_length=1024
             )
-            # 标签仍然是 input_ids 的拷贝
-            tokenized["labels"] = tokenized["input_ids"].copy()
-            return tokenized
-        # --- 修改结束 ---
+            
+            # 分词Prompt文本，用于计算需要屏蔽的长度
+            prompt_tokenized = self.model_adapter.tokenizer(
+                examples['prompt'],
+                truncation=True,
+                max_length=1024
+            )
 
-        dataset = Dataset.from_dict({'text': processed_texts})
-        tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=['text'])
+            # 创建labels的副本
+            labels = np.array(full_tokenized["input_ids"])
+            prompt_lens = [len(p) for p in prompt_tokenized["input_ids"]]
+
+            # 屏蔽掉prompt部分的labels
+            for i in range(len(labels)):
+                prompt_len = prompt_lens[i]
+                labels[i, :prompt_len] = -100 # 将prompt部分的label设为-100
+            
+            full_tokenized["labels"] = labels.tolist()
+            return full_tokenized
+
+        dataset = Dataset.from_list(data_to_tokenize)
+        tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=['prompt', 'full_text'])
         return tokenized_dataset
 
 
