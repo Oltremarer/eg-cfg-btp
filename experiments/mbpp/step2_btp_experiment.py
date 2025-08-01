@@ -955,7 +955,7 @@ def heap_queue_largest(nums,n):
             print(f"⚠️  保存进度失败: {e}")
     
     def phase2_pper_training(self, n_iterations: int, batch_size: int, min_pass_rate: float = 1.0, num_train_epochs: int = 1, **kwargs):
-        """阶段2: 优先经验回放训练，使用传入的参数"""
+        """阶段2: 优先经验回放训练，并保存当次训练使用的样本"""
         print(f"🎯 阶段2: 优先经验回放训练 ({n_iterations} 轮迭代)")
         
         if self.finetuning_manager is None:
@@ -977,6 +977,14 @@ def heap_queue_largest(nums,n):
             
             training_experiences = self.sampler.sample(filtered_experiences, batch_size)
             
+            # ### 关键新增代码：保存在该次迭代中用于训练的样本 ###
+            if training_experiences:
+                sampled_data_path = os.path.join(self.output_dir, f"iteration_{iteration+1}_sampled_training_data.json")
+                print(f"💾 将本次用于微调的 {len(training_experiences)} 个样本保存到: {sampled_data_path}")
+                with open(sampled_data_path, 'w', encoding='utf-8') as f:
+                    json.dump(training_experiences, f, indent=2, ensure_ascii=False)
+            # ### 新增代码结束 ###
+
             if not training_experiences:
                 print("⚠️  没有采样到经验，跳过此轮迭代。")
                 continue
