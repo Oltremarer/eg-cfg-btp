@@ -516,6 +516,7 @@ class MBTPFineTuningManager:
                 learning_rate=learning_rate,
                 fp16=True,
                 logging_steps=5,
+                save_strategy="epoch",
                 save_steps=100,
                 remove_unused_columns=False,
             )
